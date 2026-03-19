@@ -5,13 +5,19 @@
     // 1. CONFIGURACIÓN (6 PAÍSES)
     // ==========================================
     const DOMAIN_CONFIG = [
-        { prefix: '+57', country: 'Colombia', domains: ['https://co-crm.certislink.com'], digits: 10 },
-        { prefix: '+52', country: 'México (Cashimex)', domains: ['https://mx-crm.certislink.com'], digits: 10 },
-        { prefix: '+52', country: 'México (Various)', domains: ['https://mx-ins-crm.variousplan.com'], digits: 10 },
-        { prefix: '+56', country: 'Chile', domains: ['https://cl-crm.certislink.com'], digits: 9 },
-        { prefix: '+51', country: 'Perú', domains: ['https://pe-crm.certislink.com'], digits: 9 },
-        { prefix: '+55', country: 'Brasil', domains: ['https://crm.creddireto.com'], digits: 11 },
-        { prefix: '+54', country: 'Argentina', domains: ['https://crm.rayodinero.com'], digits: 10 }
+        { prefix: '+57', country: 'Colombia', domains: ['co-crm.certislink.com'], digits: 10 },
+        { prefix: '+52', country: 'México (Cashimex)', domains: ['mx-crm.certislink.com'], digits: 10 },
+        { prefix: '+52', country: 'México (Various)', domains: ['variousplan.com'], digits: 10 },
+        { prefix: '+56', country: 'Chile', domains: ['cl-crm.certislink.com'], digits: 9 },
+        { prefix: '+51', country: 'Perú', domains: ['pe-crm.certislink.com'], digits: 9 },
+        { prefix: '+55', country: 'Brasil', domains: ['crm.creddireto.com'], digits: 11 },
+        { prefix: '+54', country: 'Argentina', domains: ['crm.rayodinero.com'], digits: 10 }
+    ];
+
+    // 🔥 DOMINIOS PERMITIDOS PARA CORREOS 🔥
+    const DOMINIOS_PERMITIDOS = [
+        "@gmail.com", "@hotmail.com", "@icloud.com", 
+        "@yahoo.com", "@live.com", "@outlook.com"
     ];
 
     // --- ESTILOS CSS GLOBALES ---
@@ -48,6 +54,12 @@
             .btn-rafaga-toggle:hover { background: #334155; }
             .btn-rafaga-toggle.active { background: #8b5cf6; color: white; border-color: #a78bfa; box-shadow: 0 0 8px rgba(139,92,246,0.6); }
 
+            /* 🔥 BOTONES NEÓN PARA FILTRO AVANZADO 🔥 */
+            .btn-neon-si, .btn-neon-no { background: #1e293b; color: #64748b; border: 1px solid #475569; opacity: 0.6; transition: 0.3s; }
+            .btn-neon-si:hover, .btn-neon-no:hover { opacity: 0.9; background: #334155; color: #cbd5e1; }
+            .btn-neon-si.active { opacity: 1; color: #39ff14 !important; border-color: #39ff14 !important; background: rgba(57, 255, 20, 0.15) !important; box-shadow: 0 0 10px rgba(57, 255, 20, 0.6) !important; text-shadow: 0 0 5px rgba(57, 255, 20, 0.8) !important; }
+            .btn-neon-no.active { opacity: 1; color: #ff073a !important; border-color: #ff073a !important; background: rgba(255, 7, 58, 0.15) !important; box-shadow: 0 0 10px rgba(255, 7, 58, 0.6) !important; text-shadow: 0 0 5px rgba(255, 7, 58, 0.8) !important; }
+
             .switch-mora { position: relative; display: inline-block; width: 34px; height: 18px; margin-right: 6px; }
             .switch-mora input { opacity: 0; width: 0; height: 0; }
             .slider-mora { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #475569; transition: .4s; border-radius: 34px; }
@@ -55,16 +67,49 @@
             input:checked + .slider-mora { background-color: #ef4444; box-shadow: 0 0 8px #ef4444; }
             input:checked + .slider-mora:before { transform: translateX(16px); }
             .label-mora { font-size: 11px; font-weight: 800; cursor: pointer; user-select: none; transition: 0.3s; letter-spacing: 0.5px; }
+
+            /* 🔥 MODAL PRE-FILTRO MANAGER 🔥 */
+            .pf-seccion { margin-bottom: 12px; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 6px; }
+            .pf-titulo { font-size: 12px; color: #93c5fd; font-weight: bold; margin-bottom: 8px; text-transform: uppercase; }
+            .pf-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+
+            .btn-isrepay { background: rgba(57, 255, 20, 0.05); color: #34d399; border: 1px solid #34d399; border-radius: 4px; padding: 4px 16px; font-size: 13px; font-weight: bold; cursor: pointer; outline: none; transition: 0.3s; opacity: 0.5; }
+            .btn-isrepay.active { opacity: 1; color: #39ff14; border-color: #39ff14; background: rgba(57, 255, 20, 0.15); box-shadow: 0 0 10px rgba(57, 255, 20, 0.6); text-shadow: 0 0 5px rgba(57, 255, 20, 0.8); }
+            
+            /* 🔥 NUEVOS ESTILOS PARA EDICIÓN DE CORREOS 🔥 */
+            .correo-celda { cursor: pointer; padding: 3px 6px; border-radius: 4px; transition: 0.2s; display: inline-block; min-width: 60px; font-weight: bold; }
+            .correo-alerta { background-color: #f97316 !important; color: white !important; box-shadow: 0 0 5px rgba(249,115,22,0.5); }
+            .correo-valido { color: #93c5fd; }
+            .correo-editando { 
+                user-select: text !important; 
+                -webkit-user-select: text !important; 
+                -moz-user-select: text !important;
+                -ms-user-select: text !important;
+                background-color: white !important; 
+                color: black !important; 
+                outline: 2px solid #3b82f6; 
+                box-shadow: 0 0 10px rgba(59,130,246,0.8); 
+                cursor: text; 
+            }
         `;
         document.head.appendChild(style);
     };
 
     // --- UTILS ---
+    const obtenerValor = (label) => {
+        const el = [...document.querySelectorAll('div.mb-10')].find(div => (div.textContent || "").includes(label));
+        if (!el) return '';
+        const clone = el.cloneNode(true);
+        clone.querySelectorAll('button').forEach(b => b.remove());
+        const t = (clone.textContent || "").trim();
+        return t.includes(':') ? t.substring(t.indexOf(':') + 1).trim() : '';
+    };
+
     const getCountryInfo = () => {
         const href = window.location.href;
         for (const c of DOMAIN_CONFIG) {
             for (const d of c.domains) {
-                if (href.startsWith(d)) return { prefix: c.prefix, name: c.country, digits: c.digits };
+                if (href.includes(d)) return { prefix: c.prefix, name: c.country, digits: c.digits };
             }
         }
         return { prefix: '', name: 'Desconocido', digits: 10 };
@@ -96,6 +141,244 @@
         setTimeout(() => div.remove(), tiempo); 
     };
 
+    const mostrarConfirmacionHTML = (titulo, mensaje, textoConfirmar = 'Aceptar', colorConfirmar = '#3b82f6') => {
+        return new Promise((resolve) => {
+            const overlay = document.createElement('div');
+            Object.assign(overlay.style, {
+                position: 'fixed', top: '0', left: '0', width: '100vw', height: '100vh',
+                backgroundColor: 'rgba(15, 23, 42, 0.85)', zIndex: '2147483647',
+                display: 'flex', justifyContent: 'center', alignItems: 'center', backdropFilter: 'blur(5px)',
+                fontFamily: 'system-ui, -apple-system, sans-serif'
+            });
+
+            const modal = document.createElement('div');
+            Object.assign(modal.style, {
+                background: '#1e293b', padding: '25px', borderRadius: '12px', border: `1px solid ${colorConfirmar}`,
+                width: '420px', maxWidth: '90%', color: 'white', boxShadow: `0 15px 40px rgba(0,0,0,0.6), 0 0 15px ${colorConfirmar}40`,
+                textAlign: 'center'
+            });
+
+            blindarElemento(overlay);
+
+            modal.innerHTML = `
+                <h3 style="margin: 0 0 15px 0; color: ${colorConfirmar}; font-size: 20px; font-weight: bold;">${titulo}</h3>
+                <p style="margin: 0 0 25px 0; font-size: 15px; color: #cbd5e1; line-height: 1.5;">${mensaje}</p>
+                <div style="display: flex; justify-content: center; gap: 15px;">
+                    <button id="btn-modal-cancel" style="background: transparent; border: 1px solid #64748b; color: #cbd5e1; padding: 8px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s;">Cancelar</button>
+                    <button id="btn-modal-confirm" style="background: ${colorConfirmar}; border: none; color: ${colorConfirmar === '#eab308' || colorConfirmar === '#34d399' ? 'black' : 'white'}; padding: 8px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; box-shadow: 0 0 10px ${colorConfirmar}80; transition: 0.2s;">${textoConfirmar}</button>
+                </div>
+            `;
+
+            const btnCancel = modal.querySelector('#btn-modal-cancel');
+            const btnConfirm = modal.querySelector('#btn-modal-confirm');
+            
+            btnCancel.onmouseover = () => btnCancel.style.background = 'rgba(100, 116, 139, 0.2)';
+            btnCancel.onmouseout = () => btnCancel.style.background = 'transparent';
+            btnConfirm.onmouseover = () => btnConfirm.style.transform = 'scale(1.05)';
+            btnConfirm.onmouseout = () => btnConfirm.style.transform = 'scale(1)';
+
+            btnCancel.onclick = () => { overlay.remove(); resolve(false); };
+            btnConfirm.onclick = () => { overlay.remove(); resolve(true); };
+
+            overlay.appendChild(modal);
+            document.body.appendChild(overlay);
+        });
+    };
+
+    const blindarElemento = (el) => {
+        if (!el) return;
+        ['mousedown', 'mouseup', 'click', 'keydown', 'keyup', 'keypress'].forEach(evt => {
+            el.addEventListener(evt, (e) => e.stopPropagation());
+        });
+    };
+
+    // ==========================================
+    // 🛠️ MODAL PRE-FILTRO MANAGER (DINÁMICO Y REACTIVO)
+    // ==========================================
+    const mostrarModalPreFiltro = (registrosBrutos) => {
+        return new Promise((resolve) => {
+            const overlay = document.createElement('div');
+            Object.assign(overlay.style, {
+                position: 'fixed', top: '0', left: '0', width: '100vw', height: '100vh', 
+                backgroundColor: 'rgba(0,0,0,0.85)', zIndex: '2147483647', 
+                display: 'flex', justifyContent: 'center', alignItems: 'center', backdropFilter: 'blur(4px)'
+            });
+
+            const modal = document.createElement('div');
+            Object.assign(modal.style, {
+                background: '#0f172a', padding: '20px', borderRadius: '12px', border: '1px solid #3b82f6', 
+                width: '650px', maxWidth: '95%', color: 'white', maxHeight: '85vh', display: 'flex', 
+                flexDirection: 'column', boxShadow: '0 20px 50px rgba(0,0,0,0.8)', fontFamily: 'system-ui, sans-serif'
+            });
+
+            blindarElemento(overlay);
+
+            let selEtapas = [];
+            let selCuentas = [];
+            let selFechas = [];
+            let selMoras = [];
+            let isRepayActive = false;
+
+            let unicosMap = new Map();
+            const isVariousPlan = window.location.href.includes('variousplan.com');
+            
+            // DESCARTANDO DUPLICADOS EN LA ENTRADA
+            registrosBrutos.forEach(c => {
+                let idPlanBruto = isVariousPlan ? (c.borrowId || c.orderId || "") : (c.repayId || c.orderId || "");
+                const idPlanStr = String(idPlanBruto);
+                const idPlan = isVariousPlan ? idPlanStr : (idPlanStr.includes('p') ? idPlanStr : 'p' + idPlanStr);
+                if (idPlan && !unicosMap.has(idPlan)) unicosMap.set(idPlan, c);
+            });
+            const registrosUnicos = Array.from(unicosMap.values());
+
+            const renderUI = () => {
+                // 🔥 CASCADA ADN: Filtrando opciones disponibles basándonos en registros purificados
+                let baseParaCuentas = registrosUnicos;
+                if (selEtapas.length > 0) {
+                    baseParaCuentas = registrosUnicos.filter(r => selEtapas.includes(r.stageName || 'SIN ETAPA'));
+                }
+
+                let baseParaElResto = baseParaCuentas;
+                if (selCuentas.length > 0) {
+                    baseParaElResto = baseParaCuentas.filter(r => selCuentas.includes(r.urgeUserName || 'SIN ASIGNAR'));
+                }
+
+                const etapasAll = [...new Set(registrosUnicos.map(r => r.stageName || 'SIN ETAPA'))].sort();
+                const cuentasDisp = [...new Set(baseParaCuentas.map(r => r.urgeUserName || 'SIN ASIGNAR'))].sort();
+                const morasDisp = [...new Set(baseParaElResto.map(r => String(r.overdueDay || '0')))].sort((a,b)=>parseInt(a)-parseInt(b));
+                const fechasTodas = [...new Set(baseParaElResto.map(r => r.openTime ? String(r.openTime).split(' ')[0] : 'SIN FECHA'))];
+                const fechasDisp = fechasTodas.sort().reverse().slice(0, 5);
+
+                selCuentas = selCuentas.filter(c => cuentasDisp.includes(c));
+                selFechas = selFechas.filter(f => fechasDisp.includes(f));
+                selMoras = selMoras.filter(m => morasDisp.includes(m));
+
+                let countMatched = registrosUnicos.filter(c => {
+                    const rEtapa = c.stageName || 'SIN ETAPA';
+                    const rCuenta = c.urgeUserName || 'SIN ASIGNAR';
+                    const rMora = String(c.overdueDay || '0').trim();
+                    const rFecha = c.openTime ? String(c.openTime).split(' ')[0] : 'SIN FECHA';
+                    const rRepay = String(c.isRepay).toLowerCase() === 'true';
+
+                    // 1. Etapa (ADN Estricto / AND)
+                    if (selEtapas.length > 0 && !selEtapas.includes(rEtapa)) return false;
+
+                    // 2. Cuenta (ADN Estricto / AND)
+                    if (selCuentas.length > 0 && !selCuentas.includes(rCuenta)) return false;
+
+                    const tieneFechas = selFechas.length > 0;
+                    const tieneMoras = selMoras.length > 0;
+                    const tieneRepay = isRepayActive;
+
+                    // Si no tocaste los filtros sumatorios, pasan todos los que sobrevivieron a Etapa+Cuenta
+                    if (!tieneFechas && !tieneMoras && !tieneRepay) return true;
+
+                    const coincideFecha = tieneFechas && selFechas.includes(rFecha);
+                    const coincideMora = tieneMoras && selMoras.includes(rMora);
+                    const coincideRepay = tieneRepay && rRepay;
+
+                    // 3. Sumatorio de atributos (OR)
+                    return coincideFecha || coincideMora || coincideRepay; 
+                }).length;
+
+                modal.innerHTML = `
+                    <div style="border-bottom: 1px solid #334155; padding-bottom: 10px; margin-bottom: 15px;">
+                        <h2 style="margin: 0; color: #60a5fa; font-size: 18px;">⚙️ Filtro Manager de Entrada</h2>
+                        <p style="margin: 5px 0 0 0; font-size: 13px; color: #94a3b8;">
+                            Total de clientes únicos en servidor: ${registrosUnicos.length} <br>
+                            <span style="color:#34d399; font-size: 15px; font-weight: bold;">📊 Preseleccionados ahora: ${countMatched} clientes</span>
+                        </p>
+                    </div>
+                    
+                    <div style="overflow-y: auto; flex-grow: 1; padding-right: 5px;" id="pf-scroll-area">
+                        <div class="pf-seccion">
+                            <div class="pf-titulo">📌 1. Etapas (Filtro Base)</div>
+                            <div class="pf-grid">
+                                ${etapasAll.map(e => `<button type="button" class="btn-rafaga-toggle ${selEtapas.includes(e) ? 'active' : ''}" data-type="etapa" data-val="${e}">${e}</button>`).join('')}
+                            </div>
+                        </div>
+                        
+                        <div class="pf-seccion">
+                            <div class="pf-titulo">👤 2. Cuentas / Agentes (Depende de Etapa)</div>
+                            <div class="pf-grid">
+                                ${cuentasDisp.map(c => `<button type="button" class="btn-rafaga-toggle ${selCuentas.includes(c) ? 'active' : ''}" data-type="cuenta" data-val="${c}">${c}</button>`).join('')}
+                            </div>
+                        </div>
+
+                        <div class="pf-seccion">
+                            <div class="pf-titulo">📆 3. Fechas de Conexión (Sumatorio)</div>
+                            <div class="pf-grid">
+                                ${fechasDisp.map(f => `<button type="button" class="btn-rafaga-toggle ${selFechas.includes(f) ? 'active' : ''}" data-type="fecha" data-val="${f}">${f}</button>`).join('')}
+                            </div>
+                        </div>
+
+                        <div class="pf-seccion">
+                            <div class="pf-titulo">⚠️ 4. Días de Mora (Sumatorio)</div>
+                            <div class="pf-grid">
+                                ${morasDisp.map(m => `<button type="button" class="btn-rafaga-toggle ${selMoras.includes(m) ? 'active' : ''}" data-type="mora" data-val="${m}">Día ${m}</button>`).join('')}
+                            </div>
+                        </div>
+
+                        <div class="pf-seccion" style="display:flex; align-items:center; gap: 15px;">
+                            <div class="pf-titulo" style="margin-bottom:0;">💰 5. Sumar Clientes Aprobados:</div>
+                            <button type="button" id="pf-btn-isrepay" class="btn-isrepay ${isRepayActive ? 'active' : ''}">Clientes Si</button>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; border-top: 1px solid #334155; padding-top: 15px;">
+                        <button type="button" id="pf-btn-cancelar" style="background: transparent; border: 1px solid #ef4444; color: #f87171; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s;">Cancelar</button>
+                        <button type="button" id="pf-btn-procesar" style="background: #3b82f6; border: none; color: white; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; box-shadow: 0 0 10px rgba(59, 130, 246, 0.5); transition: 0.2s;">🚀 Extraer ${countMatched} clientes</button>
+                    </div>
+                `;
+
+                modal.querySelectorAll('.btn-rafaga-toggle').forEach(btn => {
+                    btn.onclick = () => {
+                        const type = btn.getAttribute('data-type');
+                        const val = btn.getAttribute('data-val');
+                        let targetArr;
+                        
+                        if (type === 'etapa') targetArr = selEtapas;
+                        if (type === 'cuenta') targetArr = selCuentas;
+                        if (type === 'fecha') targetArr = selFechas;
+                        if (type === 'mora') targetArr = selMoras;
+
+                        if (targetArr.includes(val)) {
+                            targetArr.splice(targetArr.indexOf(val), 1); 
+                        } else {
+                            targetArr.push(val); 
+                        }
+                        renderUI(); 
+                    };
+                });
+
+                modal.querySelector('#pf-btn-isrepay').onclick = () => {
+                    isRepayActive = !isRepayActive;
+                    renderUI();
+                };
+
+                modal.querySelector('#pf-btn-cancelar').onclick = () => {
+                    overlay.remove();
+                    resolve(null);
+                };
+
+                modal.querySelector('#pf-btn-procesar').onclick = () => {
+                    overlay.remove();
+                    resolve({
+                        etapas: selEtapas,
+                        cuentas: selCuentas,
+                        moras: selMoras,
+                        fechas: selFechas,
+                        soloIsRepay: isRepayActive
+                    });
+                };
+            };
+
+            renderUI();
+            overlay.appendChild(modal);
+            document.body.appendChild(overlay);
+        });
+    };
+
     // ==========================================
     // 🚀 MOTOR DE EXTRACCIÓN MASIVA VÍA API 
     // ==========================================
@@ -104,16 +387,24 @@
             const cookies = document.cookie.split(';');
             for (let i = 0; i < cookies.length; i++) {
                 const cookie = cookies[i].trim();
-                if (cookie.startsWith('Admin-Token=')) {
-                    let rawToken = cookie.substring('Admin-Token='.length);
-                    return decodeURIComponent(rawToken);
-                }
+                if (cookie.startsWith('Admin-Token=')) return decodeURIComponent(cookie.substring('Admin-Token='.length));
             }
             return null;
         } catch (e) { return null; }
     };
 
-    async function iniciarExtraccionAPI() {
+    const restaurarBotones = () => {
+        const btnManager = document.getElementById('btn-modo-manager');
+        const btnExtraer = document.getElementById('btn-extraer-todo');
+        if (btnManager) { btnManager.innerText = '⚡Modo Manager⚡'; btnManager.disabled = false; }
+        if (btnExtraer) { btnExtraer.innerText = '⚡Extraer Todo⚡'; btnExtraer.disabled = false; }
+    };
+
+    async function iniciarExtraccionAPI(esModoManager = true) {
+        if (window.location.href.includes('/login')) {
+            return mostrarAviso('Inicia sesión en el CRM primero.', '#ef4444', 'error');
+        }
+
         const inputToken = document.getElementById('input-token-api');
         if (!inputToken) return;
 
@@ -125,51 +416,144 @@
         const countryInfo = getCountryInfo(); 
         const isVariousPlan = baseUrl.includes('variousplan.com');
         
-        const btn = document.getElementById('btn-extraer-api');
-        if (btn) {
-            btn.innerText = '⏳ Extrayendo...';
-            btn.disabled = true;
-        }
+        const btnManager = document.getElementById('btn-modo-manager');
+        const btnExtraer = document.getElementById('btn-extraer-todo');
 
-        let page = 1;
-        const pageSize = 300;
-        let totalProcesados = 0;
-        let totalPages = 1;
-        const maxPagesPerRun = 10;
-        let processedPages = 0;
-        const maxDetailCallsPerRun = 300;
-        let detailCalls = 0;
+        if (btnManager) btnManager.disabled = true;
+        if (btnExtraer) btnExtraer.disabled = true;
+
+        const btnActivo = esModoManager ? btnManager : btnExtraer;
+        if (btnActivo) btnActivo.innerText = '⏳ Analizando Base...';
+
+        const pageSize = 5000;
+        const maxPagesPerRun = 20;
+        let todosLosRegistrosBrutos = [];
         
-        mostrarAviso(`Iniciando extracción en ${countryInfo.name}...`, '#3b82f6', 'info');
+        const etapasAbuscar = [-1, 0, 1, 2, 3, 4, 5, 6, 7]; 
+
+        mostrarAviso(`Buscando cuentas en ${countryInfo.name}...`, '#3b82f6', 'info');
 
         try {
-            while (true) {
-                const listUrl = `${baseUrl}/api/manage/urge/task/waitUrgeTaskPage?v=${Date.now()}`;
-                const stageId = baseUrl.includes('pe-') || baseUrl.includes('cashiper') ? 4 : 1;
-                
-                const respList = await fetch(listUrl, {
-                    method: 'POST',
-                    headers: { 'Authentication': token, 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                    body: JSON.stringify({ stageId: stageId, current: page, size: pageSize })
+            for (const sId of etapasAbuscar) {
+                let page = 1;
+                let totalPages = 1;
+
+                while (true) {
+                    try {
+                        const listUrl = `${baseUrl}/api/manage/urge/task/waitUrgeTaskPage?v=${Date.now()}`;
+                        const respList = await fetch(listUrl, {
+                            method: 'POST',
+                            headers: { 'Authentication': token, 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                            body: JSON.stringify({ stageId: sId, current: page, size: pageSize })
+                        });
+
+                        if (!respList.ok) break; 
+                        
+                        const jsonList = await respList.json();
+                        
+                        if (jsonList.code === 401 || jsonList.code === 403) throw new Error("TokenExpirado");
+                        if (jsonList.code !== 200 && jsonList.code !== 20000 && jsonList.code !== 0) break;
+
+                        const registros = jsonList?.data?.records || jsonList?.records || [];
+                        if (registros.length === 0) break; 
+                        if (jsonList?.data?.pages) totalPages = jsonList.data.pages;
+
+                        todosLosRegistrosBrutos.push(...registros);
+
+                        page++;
+                        if (page > maxPagesPerRun || page > totalPages) break;
+                        await new Promise(r => setTimeout(r, 100)); 
+                    } catch (e) {
+                        if (e.message === "TokenExpirado") throw e; 
+                        break; 
+                    }
+                }
+            }
+
+            if(todosLosRegistrosBrutos.length === 0) {
+                mostrarAviso('La lista global está vacía o el Token expiró', '#fbbf24', 'warning');
+                restaurarBotones();
+                return;
+            }
+
+            // DESCARTANDO DUPLICADOS DE LA EXTRACCIÓN GLOBAL
+            let unicosMap = new Map();
+            todosLosRegistrosBrutos.forEach(c => {
+                let idPlanBruto = isVariousPlan ? (c.borrowId || c.orderId || "") : (c.repayId || c.orderId || "");
+                const idPlanStr = String(idPlanBruto);
+                const idPlan = isVariousPlan ? idPlanStr : (idPlanStr.includes('p') ? idPlanStr : 'p' + idPlanStr);
+                if (idPlan && !unicosMap.has(idPlan)) unicosMap.set(idPlan, c);
+            });
+            const registrosUnicos = Array.from(unicosMap.values());
+            
+            let registrosAProcesar = [];
+
+            if (esModoManager) {
+                const filtrosElegidos = await mostrarModalPreFiltro(todosLosRegistrosBrutos);
+                if (!filtrosElegidos) {
+                    mostrarAviso('Extracción cancelada', '#fbbf24', 'warning');
+                    restaurarBotones();
+                    return;
+                }
+
+                registrosAProcesar = registrosUnicos.filter(c => {
+                    const rEtapa = c.stageName || 'SIN ETAPA';
+                    const rCuenta = c.urgeUserName || 'SIN ASIGNAR';
+                    const rMora = String(c.overdueDay || '0').trim();
+                    const rFecha = c.openTime ? String(c.openTime).split(' ')[0] : 'SIN FECHA';
+                    const rRepay = String(c.isRepay).toLowerCase() === 'true';
+
+                    // 1. Etapa (AND)
+                    if (filtrosElegidos.etapas.length > 0 && !filtrosElegidos.etapas.includes(rEtapa)) return false; 
+
+                    // 2. Cuenta (AND)
+                    if (filtrosElegidos.cuentas.length > 0 && !filtrosElegidos.cuentas.includes(rCuenta)) return false;
+
+                    const tieneFechas = filtrosElegidos.fechas.length > 0;
+                    const tieneMoras = filtrosElegidos.moras.length > 0;
+                    const tieneRepay = filtrosElegidos.soloIsRepay;
+
+                    // Si solo elegiste Etapa/Cuenta, pasan todos los de ese universo
+                    if (!tieneFechas && !tieneMoras && !tieneRepay) return true; 
+
+                    const coincideFecha = tieneFechas && filtrosElegidos.fechas.includes(rFecha);
+                    const coincideMora = tieneMoras && filtrosElegidos.moras.includes(rMora);
+                    const coincideRepay = tieneRepay && rRepay;
+
+                    // 3. Sumatorio (OR)
+                    return coincideFecha || coincideMora || coincideRepay; 
                 });
+            } else {
+                registrosAProcesar = registrosUnicos;
+            }
 
-                if (!respList.ok) throw new Error(`Error HTTP: ${respList.status}. Revisa el Token.`);
-                
-                const jsonList = await respList.json();
-                const registros = jsonList?.data?.records || jsonList?.records || [];
-                
-                if (registros.length === 0) break; 
-                if (jsonList?.data?.pages) totalPages = jsonList.data.pages;
+            if(registrosAProcesar.length === 0) {
+                mostrarAviso('Ningún cliente coincide', '#fbbf24', 'warning');
+                restaurarBotones();
+                return;
+            }
 
-                for (const c of registros) {
+            // 🔥 INICIA EXTRACCIÓN TURBO (CHUNKS) 🔥
+            if (btnActivo) btnActivo.innerText = `⏳ Procesando 0 / ${registrosAProcesar.length}...`;
+            let procesadosExitosos = 0;
+            const maxDetailCallsPerRun = 6000; 
+            let detailCalls = 0;
+            
+            let todosLosNuevosDatos = []; 
+            const TAMANO_PAQUETE = 15; 
+
+            for (let i = 0; i < registrosAProcesar.length; i += TAMANO_PAQUETE) {
+                const paquete = registrosAProcesar.slice(i, i + TAMANO_PAQUETE);
+                
+                const promesasPaquete = paquete.map(async (c) => {
                     let correo = c.email || "";
                     let telefono = String(c.phone || "");
-                    
                     let extension = c.extensionAmount || c.totalExtensionAmount || "";
                     let cargoMora = c.overdueFee || c.penaltyAmount || ""; 
                     let montoPago = c.principal || ""; 
 
                     if (c.taskId && c.orderId && detailCalls < maxDetailCallsPerRun) {
+                        detailCalls++;
                         try {
                             const detUrl = `${baseUrl}/api/manage/urge/task/getTaskInfo/${c.taskId}/${c.orderId}?v=${Date.now()}`;
                             const respDet = await fetch(detUrl, {
@@ -197,60 +581,54 @@
                                     }
                                 }
                             }
-                        } catch(e) { console.warn(`Error leyendo detalle de orden ${c.orderId}`); }
-                        
-                        detailCalls++;
-                        await new Promise(r => setTimeout(r, 150)); 
+                        } catch(e) {}
                     }
 
-                    // 🔥 CAMBIO CLAVE PARA VARIOUSPLAN 🔥
-                    let idPlanBruto = "";
-                    if (isVariousPlan) {
-                        idPlanBruto = c.borrowId || c.orderId || "";
-                    } else {
-                        idPlanBruto = c.repayId || c.orderId || "";
-                    }
+                    let idPlanBruto = isVariousPlan ? (c.borrowId || c.orderId || "") : (c.repayId || c.orderId || "");
                     const idPlanStr = String(idPlanBruto);
                     const idPlan = isVariousPlan ? idPlanStr : (idPlanStr.includes('p') ? idPlanStr : 'p' + idPlanStr);
 
                     const prefixClean = countryInfo.prefix.replace('+', '');
                     const telLimpio = telefono.replace(/[^0-9]/g, '');
-                    const telefonoFinal = telLimpio.length >= countryInfo.digits ? 
-                                          (prefixClean + telLimpio.slice(-countryInfo.digits)) : 
-                                          (prefixClean + telLimpio);
+                    const telefonoFinal = telLimpio.length >= countryInfo.digits ? (prefixClean + telLimpio.slice(-countryInfo.digits)) : (prefixClean + telLimpio);
 
-                    let fechaConexion = c.openTime ? String(c.openTime).split(' ')[0] : '';
-
-                    const datos = {
-                        idPlan: idPlan,
-                        telefono: telefonoFinal,
-                        nombre: c.userName || c.name || "",
-                        app: c.appName || "",
-                        correo: correo,
-                        producto: c.productName || "",
-                        monto: String(c.repayAmount || c.totalAmount || ""),
-                        importeReinv: String(extension),
-                        diasMora: String(c.overdueDay || ""),
-                        cargoMora: cargoMora,
-                        montoPago: montoPago,
-                        fechaConexion: fechaConexion 
+                    return {
+                        idPlan: idPlan, telefono: telefonoFinal, nombre: c.userName || c.name || "",
+                        app: c.appName || "", correo: correo, producto: c.productName || "",
+                        monto: String(c.repayAmount || c.totalAmount || ""), importeReinv: String(extension),
+                        diasMora: String(c.overdueDay || ""), cargoMora: cargoMora, montoPago: montoPago,
+                        fechaConexion: c.openTime ? String(c.openTime).split(' ')[0] : '',
+                        isRepay: c.isRepay, cuenta: c.urgeUserName || "Sin Asignar" 
                     };
+                });
 
-                    guardarEnLote(datos);
-                    totalProcesados++;
-                }
+                const resultadosDelPaquete = await Promise.all(promesasPaquete);
+                todosLosNuevosDatos.push(...resultadosDelPaquete);
+                
+                procesadosExitosos += resultadosDelPaquete.length;
+                if (btnActivo) btnActivo.innerText = `⏳ Procesando ${procesadosExitosos} / ${registrosAProcesar.length}...`;
 
-                page++;
-                processedPages++;
-                await new Promise(r => setTimeout(r, 400));
-                if (processedPages >= maxPagesPerRun || page > totalPages) break;
+                await new Promise(r => setTimeout(r, 200)); 
             }
 
-            mostrarAviso(`✅ Ráfaga API completada. ${totalProcesados} registros extraídos.`, '#34d399', 'success');
+            // 🔥 GUARDADO MASIVO Y REPORTE VISUAL 🔥
+            const reporte = guardarMultiplesEnLote(todosLosNuevosDatos);
+            
+            if (reporte.agregados > 0 && reporte.actualizados > 0) {
+                mostrarAviso(`✅ Listos: ${reporte.agregados} nuevos | 🔄 ${reporte.actualizados} actualizados`, '#34d399', 'success', 3500);
+            } else if (reporte.agregados > 0) {
+                mostrarAviso(`✅ Éxito: ${reporte.agregados} clientes totalmente nuevos guardados.`, '#34d399', 'success', 3500);
+            } else if (reporte.actualizados > 0) {
+                mostrarAviso(`🔄 Base refrescada: ${reporte.actualizados} clientes actualizados.`, '#3b82f6', 'info', 3500);
+            } else {
+                mostrarAviso(`✅ Escaneo terminado. No hubo cambios.`, '#94a3b8', 'info', 2500);
+            }
+
         } catch (error) {
+            console.error("🔥 Error en Motor de Extracción API:", error);
             mostrarAviso('❌ Error de conexión o Token inválido.', '#ef4444', 'error');
         } finally {
-            if (btn) { btn.innerText = '⚡Extraer Todo⚡'; btn.disabled = false; }
+            restaurarBotones();
         }
     }
 
@@ -259,20 +637,43 @@
     // ==========================================
     const guardarEnLote = (datos) => {
         let lote = JSON.parse(localStorage.getItem('LOTE_RAFAGA') || '[]');
-        
         const indexExistente = lote.findIndex(cliente => cliente.idPlan === datos.idPlan);
-        if (indexExistente === -1) {
-            lote.push(datos);
-            mostrarAviso(`📦 Capturado: ${datos.idPlan}`, '#3b82f6', 'info', 800);
-        } else {
-            lote[indexExistente] = datos;
-            mostrarAviso(`🔄 Actualizado: ${datos.idPlan}`, '#8b5cf6', 'info', 800);
-        }
+        if (indexExistente === -1) lote.push(datos); else lote[indexExistente] = datos;
         localStorage.setItem('LOTE_RAFAGA', JSON.stringify(lote)); 
         actualizarPanelFiltroPlus(); 
         actualizarTablaLotes();
     };
 
+    const guardarMultiplesEnLote = (arrayNuevosDatos) => {
+        let lote = JSON.parse(localStorage.getItem('LOTE_RAFAGA') || '[]');
+        
+        let contAgregados = 0;
+        let contActualizados = 0;
+        
+        arrayNuevosDatos.forEach(datos => {
+            const indexExistente = lote.findIndex(cliente => cliente.idPlan === datos.idPlan);
+            
+            if (indexExistente === -1) {
+                lote.push(datos);
+                contAgregados++;
+            } else {
+                let correoLocal = lote[indexExistente].correo;
+                if (correoLocal && correoLocal.trim() !== '') {
+                    datos.correo = correoLocal; 
+                }
+                
+                lote[indexExistente] = datos; 
+                contActualizados++;
+            }
+        });
+        
+        localStorage.setItem('LOTE_RAFAGA', JSON.stringify(lote)); 
+        actualizarPanelFiltroPlus(); 
+        actualizarTablaLotes(); 
+        
+        return { agregados: contAgregados, actualizados: contActualizados };
+    };
+    
     const togglePanelVisibility = (forzarEstado = null) => {
         let isVisible = localStorage.getItem('PANEL_RAFAGA_VISIBLE') === 'true';
         if (forzarEstado !== null) isVisible = forzarEstado;
@@ -282,7 +683,6 @@
         if (panel) panel.style.display = isVisible ? 'flex' : 'none';
     };
 
-    // 🔥 FILTRADO SUMATORIO MÚLTIPLE (LÓGICA OR Y DESCARTA DUPLICADOS) 🔥
     const obtenerLoteFiltrado = () => {
         let loteRaw = JSON.parse(localStorage.getItem('LOTE_RAFAGA') || '[]');
         
@@ -301,33 +701,33 @@
         const botonesMora = document.querySelectorAll('.btn-mora-plus.active');
         const morasSeleccionadas = Array.from(botonesMora).map(b => b.dataset.val);
 
+        const botonesRepay = document.querySelectorAll('.btn-repay-plus.active');
+        const repaySeleccionadas = Array.from(botonesRepay).map(b => b.dataset.val);
+
         let filtrado = loteUnicos.filter(c => {
             let matchApp = appsSeleccionadas.length === 0 || appsSeleccionadas.includes(c.app);
             if (!matchApp) return false; 
             
+            let esRepay = String(c.isRepay).toLowerCase() === 'true';
+            let txtRepay = esRepay ? 'Si' : 'No';
+            const dMora = c.diasMora ? String(c.diasMora).trim() : '';
+
             const tieneFechas = fechasSeleccionadas.length > 0;
             const tieneMoras = morasSeleccionadas.length > 0;
-            
-            const dMora = c.diasMora ? String(c.diasMora).trim() : '';
-            const coincideFecha = fechasSeleccionadas.includes(c.fechaConexion);
-            const coincideMora = morasSeleccionadas.includes(dMora);
+            const tieneRepay = repaySeleccionadas.length > 0;
 
-            if (tieneFechas && tieneMoras) {
-                return coincideFecha || coincideMora;
-            } else if (tieneFechas) {
-                return coincideFecha;
-            } else if (tieneMoras) {
-                return coincideMora;
-            } else {
-                return true; 
-            }
+            if (!tieneFechas && !tieneMoras && !tieneRepay) return true; 
+
+            const coincideFecha = tieneFechas && fechasSeleccionadas.includes(c.fechaConexion);
+            const coincideMora = tieneMoras && morasSeleccionadas.includes(dMora);
+            const coincideRepay = tieneRepay && repaySeleccionadas.includes(txtRepay);
+
+            return coincideFecha || coincideMora || coincideRepay; 
         });
-
         filtrado.sort((a, b) => (parseInt(a.diasMora) || 0) - (parseInt(b.diasMora) || 0));
         return filtrado;
     };
 
-    // 🔥 DIBUJA BOTONES DEL FILTRO PLUS 🔥
     const actualizarPanelFiltroPlus = () => {
         let loteRaw = JSON.parse(localStorage.getItem('LOTE_RAFAGA') || '[]');
         let unicosMap = new Map();
@@ -337,6 +737,7 @@
         const activeApps = Array.from(document.querySelectorAll('.btn-app-plus.active')).map(b => b.dataset.val);
         const activeFechas = Array.from(document.querySelectorAll('.btn-fecha-plus.active')).map(b => b.dataset.val);
         const activeMoras = Array.from(document.querySelectorAll('.btn-mora-plus.active')).map(b => b.dataset.val);
+        const activeRepay = Array.from(document.querySelectorAll('.btn-repay-plus.active')).map(b => b.dataset.val);
 
         const appsUnicas = [...new Set(lote.map(c => c.app).filter(Boolean))].sort();
         const fechasUnicas = [...new Set(lote.map(c => c.fechaConexion).filter(Boolean))].sort().reverse();
@@ -346,7 +747,7 @@
         if (contApps) {
             contApps.innerHTML = appsUnicas.map(a => {
                 let isActive = activeApps.includes(a) ? 'active' : '';
-                return `<button class="btn-rafaga-toggle btn-app-plus ${isActive}" data-val="${a}">${a}</button>`;
+                return `<button type="button" class="btn-rafaga-toggle btn-app-plus ${isActive}" data-val="${a}">${a}</button>`;
             }).join('');
         }
 
@@ -355,7 +756,7 @@
             contFechas.innerHTML = fechasUnicas.map(f => {
                 let fCorta = f.length > 5 ? f.substring(5) : f;
                 let isActive = activeFechas.includes(f) ? 'active' : '';
-                return `<button class="btn-rafaga-toggle btn-fecha-plus ${isActive}" data-val="${f}">${fCorta}</button>`;
+                return `<button type="button" class="btn-rafaga-toggle btn-fecha-plus ${isActive}" data-val="${f}">${fCorta}</button>`;
             }).join('');
         }
 
@@ -363,8 +764,25 @@
         if (contMoras) {
             contMoras.innerHTML = morasUnicas.map(m => {
                 let isActive = activeMoras.includes(m) ? 'active' : '';
-                return `<button class="btn-rafaga-toggle btn-mora-plus ${isActive}" data-val="${m}">Día ${m}</button>`;
+                return `<button type="button" class="btn-rafaga-toggle btn-mora-plus ${isActive}" data-val="${m}">Día ${m}</button>`;
             }).join('');
+        }
+
+        const contRepay = document.getElementById('plus-repay-container');
+        if (contRepay) {
+            let hasSi = lote.some(c => String(c.isRepay).toLowerCase() === 'true');
+            let hasNo = lote.some(c => String(c.isRepay).toLowerCase() !== 'true');
+            let htmlRepay = '';
+            
+            if (hasSi) {
+                let isActive = activeRepay.includes('Si') ? 'active' : '';
+                htmlRepay += `<button type="button" class="btn-rafaga-toggle btn-repay-plus btn-neon-si ${isActive}" data-val="Si">Clientes: Si</button>`;
+            }
+            if (hasNo) {
+                let isActive = activeRepay.includes('No') ? 'active' : '';
+                htmlRepay += `<button type="button" class="btn-rafaga-toggle btn-repay-plus btn-neon-no ${isActive}" data-val="No">Clientes: No</button>`;
+            }
+            contRepay.innerHTML = htmlRepay;
         }
 
         document.querySelectorAll('.btn-rafaga-toggle').forEach(btn => {
@@ -389,15 +807,18 @@
                 backgroundColor: 'rgba(15, 23, 42, 0.95)', color: '#fff', borderRadius: '12px', 
                 zIndex: 2147483647, backdropFilter: 'blur(10px)', boxShadow: '0 15px 40px rgba(0,0,0,0.6)', 
                 display: 'none', flexDirection: 'column', border: '1px solid #334155', 
-                fontFamily: 'system-ui, -apple-system, sans-serif'
+                fontFamily: 'system-ui, -apple-system, sans-serif',
+                
+                userSelect: 'none', WebkitUserSelect: 'none', MozUserSelect: 'none', msUserSelect: 'none'
             });
 
-            // HEADER PROTEGIDO
+            blindarElemento(panel);
+
             const header = document.createElement('div');
             Object.assign(header.style, {
                 padding: '12px 20px', borderBottom: '1px solid #334155', display: 'flex', 
                 justifyContent: 'space-between', alignItems: 'center', fontWeight: 'bold', fontSize: '15px',
-                cursor: 'grab', backgroundColor: 'rgba(30, 41, 59, 0.95)', borderRadius: '12px 12px 0 0', userSelect: 'none'
+                cursor: 'grab', backgroundColor: 'rgba(30, 41, 59, 0.95)', borderRadius: '12px 12px 0 0'
             });
             
             const tokenDetectado = obtenerTokenAutomatico() || "";
@@ -413,7 +834,7 @@
                     </div>
                     <span style="font-size:11px; font-weight:normal; color:#94a3b8; background:#0f172a; padding:2px 6px; border-radius:4px; user-select:none;">Ctrl+Shift+Z</span>
                 </div>
-                <button id="btn-cerrar-panel" style="background:none; border:none; color:#f87171; cursor:pointer; font-size:18px; line-height:1;">✖</button>
+                <button type="button" id="btn-cerrar-panel" style="background:none; border:none; color:#f87171; cursor:pointer; font-size:18px; line-height:1;">✖</button>
             `;
 
             setTimeout(() => {
@@ -451,28 +872,43 @@
             }, 100);
             
             let isDragging = false, offsetX, offsetY;
+            
             header.onmousedown = (e) => {
                 if (e.target.id === 'btn-cerrar-panel' || e.target.id === 'input-token-api') return;
-                isDragging = true; header.style.cursor = 'grabbing';
+                e.preventDefault(); 
+                isDragging = true; 
+                header.style.cursor = 'grabbing';
+                
                 const rect = panel.getBoundingClientRect(); 
+                
+                panel.style.transform = 'none'; 
+                panel.style.left = rect.left + 'px';
+                panel.style.top = rect.top + 'px';
+
                 offsetX = e.clientX - rect.left; 
                 offsetY = e.clientY - rect.top;
             };
+            
             document.addEventListener('mousemove', (e) => {
                 if (!isDragging) return;
-                panel.style.left = (e.clientX - offsetX) + 'px'; panel.style.top = (e.clientY - offsetY) + 'px';
-            });
-            document.addEventListener('mouseup', () => { isDragging = false; header.style.cursor = 'grab'; });
+                panel.style.left = (e.clientX - offsetX) + 'px'; 
+                panel.style.top = (e.clientY - offsetY) + 'px';
+            }, true);
+            
+            document.addEventListener('mouseup', () => { 
+                isDragging = false; 
+                header.style.cursor = 'grab'; 
+            }, true);
 
-            // 🔥 TOOLBAR CON BOTÓN PLUS 🔥
             const toolbar = document.createElement('div');
             Object.assign(toolbar.style, {
                 padding: '8px 20px', borderBottom: '1px solid #334155', backgroundColor: 'rgba(15, 23, 42, 0.8)',
                 display: 'flex', gap: '15px', alignItems: 'center', flexWrap: 'wrap', position: 'relative' 
             });
 
+            // 🔥 CIRUGÍA: ORDEN DEL FILTRO AVANZADO MOVIDO AQUÍ 🔥
             toolbar.innerHTML = `
-                <button id="btn-mas-filtro" style="background: #8b5cf6; color: white; border: 1px solid #7c3aed; border-radius: 4px; padding: 6px 12px; font-size: 13px; font-weight: bold; cursor: pointer; outline: none; box-shadow: 0 0 10px rgba(139, 92, 246, 0.5); transition: 0.3s;">
+                <button type="button" id="btn-mas-filtro" style="background: #8b5cf6; color: white; border: 1px solid #7c3aed; border-radius: 4px; padding: 6px 12px; font-size: 13px; font-weight: bold; cursor: pointer; outline: none; box-shadow: 0 0 10px rgba(139, 92, 246, 0.5); transition: 0.3s;">
                     ✨ + Filtros Avanzados
                 </button>
                 
@@ -483,7 +919,12 @@
                         <input type="checkbox" id="check-modo-mora">
                         <span class="slider-mora"></span>
                     </label>
-                    <span class="label-mora" id="text-modo-mora">SIN MORA</span>
+                    <span class="label-mora" id="text-modo-mora" style="margin-right:8px;">SIN MORA</span>
+                    
+                    <div style="width: 1px; height: 14px; background: #475569; margin: 0 8px;"></div>
+                    <span title="Cuenta / Agente de los datos mostrados" style="font-size: 11px; font-weight: bold; color: #93c5fd; display: flex; align-items: center; gap: 4px; white-space: normal; word-break: break-word;">
+                        👤 <span id="label-cuentas-extraidas">Vacío</span>
+                    </span>
                 </div>
 
                 <div id="panel-filtro-plus" style="position: absolute; top: 100%; left: 20px; background: rgba(15, 23, 42, 0.98); border: 1px solid #8b5cf6; border-radius: 8px; padding: 15px; z-index: 3000; display: none; flex-direction: column; gap: 15px; min-width: 300px; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.8);">
@@ -506,6 +947,11 @@
                         <label style="font-size: 12px; color: #cbd5e1; font-weight:bold; display:block; margin-bottom:5px;">⚠️ Días de Mora (Múltiple):</label>
                         <div id="plus-moras-container" style="display:flex; flex-wrap:wrap; gap:6px;"></div>
                     </div>
+
+                    <div>
+                        <label style="font-size: 12px; color: #cbd5e1; font-weight:bold; display:block; margin-bottom:5px;">💰 Estado (Múltiple):</label>
+                        <div id="plus-repay-container" style="display:flex; flex-wrap:wrap; gap:6px;"></div>
+                    </div>
                 </div>
             `;
             
@@ -514,7 +960,8 @@
                 const panelPlus = document.getElementById('panel-filtro-plus');
                 
                 if(btnMasFiltro && panelPlus) {
-                    btnMasFiltro.onclick = () => {
+                    btnMasFiltro.onclick = (e) => {
+                        e.stopPropagation();
                         if(panelPlus.style.display === 'none') {
                             panelPlus.style.display = 'flex';
                             actualizarPanelFiltroPlus(); 
@@ -522,7 +969,10 @@
                             panelPlus.style.display = 'none';
                         }
                     };
-                    document.getElementById('btn-cerrar-plus').onclick = () => panelPlus.style.display = 'none';
+                    document.getElementById('btn-cerrar-plus').onclick = (e) => {
+                        e.stopPropagation();
+                        panelPlus.style.display = 'none';
+                    };
                 }
             }, 100);
 
@@ -538,20 +988,25 @@
             
             footer.innerHTML = `
                 <div style="display:flex; align-items:center; gap:8px;">
-                    <button id="btn-limpiar-lote" class="btn-rafaga btn-red" title="Limpiar Base">🗑️</button>
-                    <button id="btn-descargar-contactos" class="btn-rafaga btn-orange" title="Descargar CSV">👥</button>
-                    <button id="btn-extraer-api" class="btn-rafaga btn-yellow">⚡Extraer Todo⚡</button>
+                    <button type="button" id="btn-limpiar-lote" class="btn-rafaga btn-red" title="Limpiar Base">🗑️</button>
+                    <button type="button" id="btn-descargar-contactos" class="btn-rafaga btn-orange" title="Descargar CSV">👥</button>
+                    
+                    <button type="button" id="btn-modo-manager" class="btn-rafaga btn-yellow">⚡Modo Manager⚡</button>
+                    <button type="button" id="btn-extraer-todo" class="btn-rafaga btn-green">⚡Extraer Todo⚡</button>
                 </div>
                 <div style="display:flex; gap:10px;">
-                    <button id="btn-copiar-correos" class="btn-rafaga btn-purple">📧 Correos</button>
-                    <button id="btn-copiar-lote" class="btn-rafaga btn-blue">Copy Datos</button>
+                    <button type="button" id="btn-copiar-correos" class="btn-rafaga btn-purple">📧 Correos</button>
+                    <button type="button" id="btn-copiar-lote" class="btn-rafaga btn-blue">Copy Datos</button>
                 </div>
             `;
 
             panel.appendChild(header); panel.appendChild(toolbar); panel.appendChild(tableContainer); panel.appendChild(footer);
             document.body.appendChild(panel);
 
-            document.getElementById('btn-cerrar-panel').onclick = () => togglePanelVisibility(false);
+            document.getElementById('btn-cerrar-panel').onclick = (e) => { 
+                e.stopPropagation();
+                togglePanelVisibility(false); 
+            };
 
             const checkMora = document.getElementById('check-modo-mora');
             const textMora = document.getElementById('text-modo-mora');
@@ -569,20 +1024,57 @@
                 actualizarTablaLotes();   
             };
 
-            document.getElementById('btn-limpiar-lote').onclick = () => {
-                if(confirm('¿Estás seguro de eliminar todos los datos capturados?')) {
+            document.getElementById('btn-limpiar-lote').onclick = async (e) => {
+                e.stopPropagation();
+                const confirmado = await mostrarConfirmacionHTML(
+                    '🗑️ Limpiar Base de Datos', 
+                    '¿Estás seguro de eliminar <strong>todos los datos</strong> capturados?<br>Esta acción no se puede deshacer.',
+                    'Sí, Eliminar todo',
+                    '#ef4444' 
+                );
+                if(confirmado) {
                     localStorage.setItem('LOTE_RAFAGA', '[]');
                     actualizarPanelFiltroPlus();
                     actualizarTablaLotes();
                 }
             };
 
-            const btnExtraerApi = document.getElementById('btn-extraer-api');
-            if (btnExtraerApi) {
-                btnExtraerApi.onclick = (e) => { e.preventDefault(); iniciarExtraccionAPI(); };
+            const btnModoManager = document.getElementById('btn-modo-manager');
+            if (btnModoManager) {
+                btnModoManager.onclick = async (e) => { 
+                    e.preventDefault(); 
+                    e.stopPropagation(); 
+                    const confirmado = await mostrarConfirmacionHTML(
+                        '⚠️ ADVERTENCIA DE SISTEMA',
+                        '¿Estás seguro que estás en una <strong style="color:#eab308;">Cuenta Manager</strong>?',
+                        'Sí, Continuar',
+                        '#eab308' 
+                    );
+                    if(confirmado) {
+                        iniciarExtraccionAPI(true); 
+                    }
+                };
+            }
+            
+            const btnExtraerTodo = document.getElementById('btn-extraer-todo');
+            if (btnExtraerTodo) {
+                btnExtraerTodo.onclick = async (e) => { 
+                    e.preventDefault(); 
+                    e.stopPropagation(); 
+                    const confirmado = await mostrarConfirmacionHTML(
+                        '⚠️ ADVERTENCIA DE SISTEMA',
+                        '¿Estás seguro que estás en una <strong style="color:#34d399;">cuenta única</strong> administrada por agente?',
+                        'Sí, Continuar',
+                        '#34d399' 
+                    );
+                    if(confirmado) {
+                        iniciarExtraccionAPI(false); 
+                    }
+                };
             }
 
-            document.getElementById('btn-descargar-contactos').onclick = () => {
+            document.getElementById('btn-descargar-contactos').onclick = (e) => {
+                e.stopPropagation();
                 let lote = obtenerLoteFiltrado();
                 if (lote.length === 0) return mostrarAviso('No hay contactos', '#fbbf24', 'warning');
                 
@@ -608,7 +1100,8 @@
                 mostrarAviso('CSV descargado 📥', '#f59e0b', 'success');
             };
 
-            document.getElementById('btn-copiar-lote').onclick = () => {
+            document.getElementById('btn-copiar-lote').onclick = (e) => {
+                e.stopPropagation();
                 let lote = obtenerLoteFiltrado();
                 if (lote.length === 0) return mostrarAviso('No hay datos', '#fbbf24', 'warning');
                 
@@ -619,7 +1112,7 @@
                     if (isMoraActive) {
                         dataFila.push(c.diasMora || '0', c.cargoMora || '0', c.montoPago || '0');
                     }
-                    dataFila.push(c.fechaConexion || ''); // La fecha SIEMPRE va al final
+                    dataFila.push(c.fechaConexion || ''); 
                     return dataFila.join('\t');
                 });
 
@@ -628,7 +1121,8 @@
                 });
             };
 
-            document.getElementById('btn-copiar-correos').onclick = () => {
+            document.getElementById('btn-copiar-correos').onclick = (e) => {
+                e.stopPropagation();
                 let lote = obtenerLoteFiltrado(); 
                 let correos = lote.map(c => c.correo).filter(c => c && c.trim() !== ''); 
                 if (correos.length === 0) return mostrarAviso('No hay correos', '#fbbf24', 'warning');
@@ -646,6 +1140,14 @@
         if (!container) return;
 
         let loteFiltrado = obtenerLoteFiltrado();
+
+        const labelCuentas = document.getElementById('label-cuentas-extraidas');
+        if (labelCuentas) {
+            let cuentasUnicas = [...new Set(loteFiltrado.map(c => c.cuenta || 'Sin Asignar'))].filter(c => c !== 'Sin Asignar');
+            let txtCuentas = cuentasUnicas.length > 0 ? cuentasUnicas.join(', ') : 'Vacío';
+            labelCuentas.innerText = txtCuentas;
+            labelCuentas.parentElement.title = "Agentes: " + txtCuentas;
+        }
 
         if (loteFiltrado.length === 0) {
             container.innerHTML = '<div style="text-align:center; padding:40px; color:#64748b; font-size:14px; min-width: 600px;">No hay datos en la Base o coincidiendo con el filtro.</div>';
@@ -684,6 +1186,24 @@
             if (c.fechaConexion === strHoy) colorFecha = '#34d399'; 
             else if (c.fechaConexion === strAyer) colorFecha = '#fb923c'; 
 
+            let correoLimpio = (c.correo || '').toLowerCase().trim();
+            let esCorreoValido = DOMINIOS_PERMITIDOS.some(d => correoLimpio.endsWith(d));
+            let claseCorreo = esCorreoValido ? 'correo-valido' : 'correo-alerta';
+            let txtCorreo = c.correo && c.correo.trim() !== '' ? c.correo : 'Sin_Correo';
+
+            let esRepay = String(c.isRepay).toLowerCase() === 'true';
+            let txtRepay = esRepay ? 'Si' : 'No';
+            let colorNeon = esRepay ? '#39ff14' : '#ff073a'; 
+            let bgNeon = esRepay ? 'rgba(57, 255, 20, 0.1)' : 'rgba(255, 7, 58, 0.1)';
+            
+            let etiquetaRepay = `
+                <div style="margin-top: 4px; user-select: none; pointer-events: none;">
+                    <span style="font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 4px; background: ${bgNeon}; color: ${colorNeon}; border: 1px solid ${colorNeon}; box-shadow: 0 0 6px rgba(${esRepay ? '57,255,20' : '255,7,58'}, 0.5); letter-spacing: 0.5px; user-select: none; -webkit-user-select: none; -moz-user-select: none;">
+                        ${txtRepay}
+                    </span>
+                </div>
+            `;
+
             html += `
                 <tr class="fila-rafaga" style="border-bottom: 1px solid #334155;">
                     <td style="padding:8px 15px; color:#60a5fa; font-weight:500;">${c.idPlan}</td>
@@ -693,8 +1213,15 @@
                         ${c.fechaConexion ? `<div style="font-size: 10.5px; color: ${colorFecha}; margin-top: 2px; font-weight: 600;">🕒 ${c.fechaConexion}</div>` : ''}
                     </td>
                     <td style="padding:8px 15px; color:#cbd5e1; font-weight:bold;">${c.app}</td>
-                    <td style="padding:8px 15px; color:#93c5fd;">${c.correo}</td>
-                    <td style="padding:8px 15px; color:#cbd5e1;">${c.producto}</td>
+                    
+                    <td style="padding:8px 15px;">
+                        <span class="correo-celda ${claseCorreo}" data-idplan="${c.idPlan}" title="Doble Clic para editar">${txtCorreo}</span>
+                    </td>
+
+                    <td style="padding:8px 15px; color:#cbd5e1; line-height: 1.2;">
+                        <div>${c.producto}</div>
+                        ${etiquetaRepay}
+                    </td>
                     <td style="padding:8px 15px; color:#34d399; font-weight:bold;">${c.monto}</td>
                     <td style="padding:8px 15px; color:#f87171;">${c.importeReinv}</td>
                     ${isMoraActive ? `
@@ -711,17 +1238,64 @@
         
         const btnCopy = document.getElementById('btn-copiar-lote');
         if(btnCopy) btnCopy.innerText = `Copy Datos (${loteFiltrado.length})`;
+
+        container.querySelectorAll('.correo-celda').forEach(celda => {
+            celda.addEventListener('dblclick', function(e) {
+                e.stopPropagation();
+                this.contentEditable = "true";
+                this.classList.add("correo-editando");
+                
+                if (this.innerText.trim() === 'Sin_Correo') this.innerText = '';
+                
+                this.focus();
+                document.execCommand('selectAll', false, null);
+            });
+
+            const finalizarEdicion = (e) => {
+                if (e.type === 'blur' || (e.type === 'keydown' && e.key === 'Enter')) {
+                    if (e.key === 'Enter') e.preventDefault();
+                    
+                    celda.contentEditable = "false";
+                    celda.classList.remove("correo-editando");
+                    
+                    let nuevoCorreo = celda.innerText.trim();
+                    if (nuevoCorreo === 'Sin_Correo') nuevoCorreo = '';
+
+                    const esValido = DOMINIOS_PERMITIDOS.some(d => nuevoCorreo.toLowerCase().endsWith(d));
+                    
+                    if (!nuevoCorreo) {
+                        celda.innerText = 'Sin_Correo';
+                        celda.className = 'correo-celda correo-alerta';
+                    } else {
+                        celda.className = `correo-celda ${esValido ? 'correo-valido' : 'correo-alerta'}`;
+                    }
+
+                    const idPlan = celda.getAttribute('data-idplan');
+                    let loteRaw = JSON.parse(localStorage.getItem('LOTE_RAFAGA') || '[]');
+                    const index = loteRaw.findIndex(item => item.idPlan === idPlan);
+                    
+                    if (index !== -1 && loteRaw[index].correo !== nuevoCorreo) {
+                        loteRaw[index].correo = nuevoCorreo; 
+                        localStorage.setItem('LOTE_RAFAGA', JSON.stringify(loteRaw));
+                    }
+                }
+            };
+
+            celda.addEventListener('blur', finalizarEdicion);
+            celda.addEventListener('keydown', finalizarEdicion);
+        });
     }; 
 
-    // --- EVENTOS GLOBALES ---
     window.addEventListener('keydown', (e) => {
         const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
         const modifierKey = isMac ? e.metaKey : e.ctrlKey;
         if (modifierKey && e.shiftKey && e.code === 'KeyZ') {
             e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation(); 
             togglePanelVisibility(); 
         }
-    });
+    }, true); 
 
     window.addEventListener('storage', (e) => {
         if (e.key === 'LOTE_RAFAGA') {
@@ -731,18 +1305,6 @@
         if (e.key === 'PANEL_RAFAGA_VISIBLE') {
             const panel = document.getElementById('panel-excel-rafaga');
             if (panel) panel.style.display = e.newValue === 'true' ? 'flex' : 'none';
-        }
-        if (e.key === 'RAFAGA_MODO_MORA') {
-            const checked = e.newValue === 'true';
-            const checkMora = document.getElementById('check-modo-mora');
-            const textMora = document.getElementById('text-modo-mora');
-            
-            if (checkMora && textMora) {
-                checkMora.checked = checked;
-                textMora.innerText = checked ? 'CON MORA' : 'SIN MORA';
-                textMora.style.color = checked ? '#ef4444' : '#94a3b8';
-                actualizarTablaLotes();
-            }
         }
     });
 
@@ -755,13 +1317,20 @@
             if (isDetail2 || isDetail3) {
                 const nuevoEstado = isDetail3 ? 'true' : 'false';
                 localStorage.setItem('RAFAGA_MODO_MORA', nuevoEstado);
-                window.dispatchEvent(new StorageEvent('storage', { key: 'RAFAGA_MODO_MORA', newValue: nuevoEstado }));
+                
+                const checkMora = document.getElementById('check-modo-mora');
+                const textMora = document.getElementById('text-modo-mora');
+                if (checkMora && textMora) {
+                    checkMora.checked = (nuevoEstado === 'true');
+                    textMora.innerText = checkMora.checked ? 'CON MORA' : 'SIN MORA';
+                    textMora.style.color = checkMora.checked ? '#ef4444' : '#94a3b8';
+                    actualizarTablaLotes();
+                }
             }
         }
     }).observe(document, { subtree: true, childList: true });
     let lastUrl = location.href;
 
-    // INICIO
     (async () => {
         if (localStorage.getItem('PANEL_RAFAGA_VISIBLE') === null) localStorage.setItem('PANEL_RAFAGA_VISIBLE', 'true');
         
