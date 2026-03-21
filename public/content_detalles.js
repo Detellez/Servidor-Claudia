@@ -1,5 +1,8 @@
 (function() {
     'use strict';
+    
+    // 🔥 FIX OBLIGATORIO: Evitar que el script cuente doble por culpa de los iframes invisibles
+    if (window.self !== window.top) return;
 
     // 1. CONFIGURACIÓN
     const CONFIG = [{
@@ -26,6 +29,59 @@
     let keepAliveInterval = null; 
     let currentClientId = null;
     
+    // --- NUEVAS FUNCIONES VISUALES PARA ALERTAS ---
+    const blindarElemento = (el) => {
+        if (!el) return;
+        ['mousedown', 'mouseup', 'click', 'keydown', 'keyup', 'keypress'].forEach(evt => {
+            el.addEventListener(evt, (e) => e.stopPropagation());
+        });
+    };
+
+    const mostrarConfirmacionHTML = (titulo, mensaje, textoConfirmar = 'Aceptar', colorConfirmar = '#3b82f6') => {
+        return new Promise((resolve) => {
+            const overlay = document.createElement('div');
+            Object.assign(overlay.style, {
+                position: 'fixed', top: '0', left: '0', width: '100vw', height: '100vh',
+                backgroundColor: 'rgba(15, 23, 42, 0.85)', zIndex: '2147483647',
+                display: 'flex', justifyContent: 'center', alignItems: 'flex-start', paddingTop: '20px', backdropFilter: 'blur(5px)',
+                fontFamily: 'system-ui, -apple-system, sans-serif'
+            });
+
+            const modal = document.createElement('div');
+            Object.assign(modal.style, {
+                background: '#1e293b', padding: '25px', borderRadius: '12px', border: `1px solid ${colorConfirmar}`,
+                width: '420px', maxWidth: '90%', color: 'white', boxShadow: `0 15px 40px rgba(0,0,0,0.6), 0 0 15px ${colorConfirmar}40`,
+                textAlign: 'center'
+            });
+
+            blindarElemento(overlay);
+
+            modal.innerHTML = `
+                <h3 style="margin: 0 0 15px 0; color: ${colorConfirmar}; font-size: 20px; font-weight: bold;">${titulo}</h3>
+                <p style="margin: 0 0 25px 0; font-size: 15px; color: #cbd5e1; line-height: 1.5;">${mensaje}</p>
+                <div style="display: flex; justify-content: center; gap: 15px;">
+                    <button id="btn-modal-cancel" style="background: transparent; border: 1px solid #64748b; color: #cbd5e1; padding: 8px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s;">Cancelar</button>
+                    <button id="btn-modal-confirm" style="background: ${colorConfirmar}; border: none; color: ${colorConfirmar === '#eab308' || colorConfirmar === '#34d399' ? 'black' : 'white'}; padding: 8px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; box-shadow: 0 0 10px ${colorConfirmar}80; transition: 0.2s;">${textoConfirmar}</button>
+                </div>
+            `;
+
+            const btnCancel = modal.querySelector('#btn-modal-cancel');
+            const btnConfirm = modal.querySelector('#btn-modal-confirm');
+            
+            btnCancel.onmouseover = () => btnCancel.style.background = 'rgba(100, 116, 139, 0.2)';
+            btnCancel.onmouseout = () => btnCancel.style.background = 'transparent';
+            btnConfirm.onmouseover = () => btnConfirm.style.transform = 'scale(1.05)';
+            btnConfirm.onmouseout = () => btnConfirm.style.transform = 'scale(1)';
+
+            btnCancel.onclick = () => { overlay.remove(); resolve(false); };
+            btnConfirm.onclick = () => { overlay.remove(); resolve(true); };
+
+            overlay.appendChild(modal);
+            document.body.appendChild(overlay);
+        });
+    };
+    // ----------------------------------------------
+
     function loadState() {
         const clientId = getUniqueClientId();
         if (!clientId) return;
@@ -37,14 +93,24 @@
         
         const saved = localStorage.getItem('CRM_BTN_STATE_' + clientId);
         if (saved) {
-            try { state = Object.assign(state, JSON.parse(saved)); } catch(e){}
+            try { 
+                const data = JSON.parse(saved);
+                // 🧠 MAGIA: Si el dato es de un día anterior, lo ignoramos para que amanezca limpio
+                if (data.fechaGuardado !== new Date().toDateString()) {
+                    localStorage.removeItem('CRM_BTN_STATE_' + clientId);
+                } else {
+                    state = Object.assign(state, data); 
+                }
+            } catch(e){}
         }
     }
     
     function saveState() {
         const clientId = getUniqueClientId();
         if (clientId) {
-            localStorage.setItem('CRM_BTN_STATE_' + clientId, JSON.stringify(state));
+            // Guardamos el estado sellándolo con la fecha de hoy
+            const dataToSave = Object.assign({}, state, { fechaGuardado: new Date().toDateString() });
+            localStorage.setItem('CRM_BTN_STATE_' + clientId, JSON.stringify(dataToSave));
         }
     }
 
@@ -114,7 +180,7 @@
             toast = document.createElement('div');
             toast.id = 'toast-crm-global';
             Object.assign(toast.style, {
-                position: 'fixed', bottom: '30px', left: '50%', transform: 'translateX(-50%)',
+                position: 'fixed', top: '20px', left: '50%', transform: 'translateX(-50%)',
                 zIndex: 2147483647, backgroundColor: 'rgba(15, 23, 42, 0.95)', color: 'white',
                 padding: '12px 24px', borderRadius: '12px', 
                 fontFamily: "'Segoe UI', sans-serif", fontSize: '13px', lineHeight: '1.4',
@@ -220,60 +286,69 @@
         let stuckTicks = 0;
 
         monitorInterval = setInterval(() => {
-            let total = 0, done = 0, pending = 0, errors = 0;
+            let totalPestanas = 0, done = 0, pending = 0, errors = 0, duplicados = 0;
             
+            // 1. Escaneo de memoria
             for (let i = 0; i < localStorage.length; i++) {
                 const key = localStorage.key(i);
                 if (key && key.startsWith('crm_task_')) {
-                    total++;
+                    totalPestanas++;
                     const val = localStorage.getItem(key);
                     if (val === 'done') done++;
                     else if (val === 'pending') pending++;
-                    else if (val === 'error' || val === 'duplicate') errors++; 
+                    else if (val === 'error') errors++; 
+                    else if (val === 'duplicate') duplicados++; 
                 }
             }
 
-            const currentCompleted = done + errors;
+            // 2. LA MAGIA MATEMÁTICA: Separar reales de clones
+            const clientesProcesados = done + errors; 
+            const avanceTotal = done + errors + duplicados; 
 
-            // 🔥 PERRO GUARDIÁN (Anti-Atascos): Si pasan 8 segundos sin que ninguna pestaña avance
-            if (pending > 0 && currentCompleted === lastCompleted) {
+            // 3. PERRO GUARDIÁN (Anti-Atascos)
+            if (pending > 0 && avanceTotal === lastCompleted) {
                 stuckTicks++;
-                if (stuckTicks >= 10) { // 10 ticks * 800ms = 8 segundos atascado
+                if (stuckTicks >= 10) { 
                     for (let i = 0; i < localStorage.length; i++) {
                         const key = localStorage.key(i);
                         if (key && key.startsWith('crm_task_') && localStorage.getItem(key) === 'pending') {
-                            localStorage.setItem(key, 'error'); // Libera las pestañas colgadas
+                            localStorage.setItem(key, 'error'); 
                         }
                     }
                 }
             } else {
                 stuckTicks = 0;
-                lastCompleted = currentCompleted;
+                lastCompleted = avanceTotal;
             }
 
-            const percentage = total > 0 ? Math.round((currentCompleted / total) * 100) : 0;
+            const percentage = totalPestanas > 0 ? Math.round((avanceTotal / totalPestanas) * 100) : 0;
             
+            // 4. NOTIFICACIÓN MIENTRAS PROCESA
             if (settlementTimer < 5) {
                 updateDisplay(
                     `<div style="font-weight:700; margin-bottom:4px; font-size:14px;">
-                        ⏳ PROCESANDO: <b>${currentCompleted}/${total}</b> (${percentage}%)
+                        ⏳ LEYENDO: <b>${avanceTotal}/${totalPestanas}</b> PESTAÑAS (${percentage}%)
                       </div>
-                      <div style="font-size:11px; color:#cbd5e1; border-top:1px solid rgba(255,255,255,0.2); padding-top:4px;">
-                        📝 "${msgShort}"
+                      <div style="font-size:11.5px; color:#cbd5e1; border-top:1px solid rgba(255,255,255,0.2); padding-top:4px;">
+                        Seguimientos reales: <b style="color:#fbbf24; font-size:13px;">${clientesProcesados}</b> | Omitidos: <b style="color:#ef4444; font-size:13px;">${duplicados}</b>
                       </div>`, 
                     '#3b82f6'
                 );
             }
 
-            if (total > 0 && currentCompleted >= total) {
+            // 5. NOTIFICACIÓN FINAL
+            if (totalPestanas > 0 && avanceTotal >= totalPestanas) {
                 settlementTimer++;
                 if (settlementTimer >= 3) { 
                     clearInterval(monitorInterval);
                     updateDisplay(
                         `<div style="font-weight:800; font-size:15px; margin-bottom:5px;">✅ FINALIZADO COMPLETAMENTE</div>
-                         <div style="font-size:14px; margin-bottom:5px;">Total Pestañas: <b>${total}</b></div>
-                         <div style="font-size:11px; color:#cbd5e1; border-top:1px solid rgba(255,255,255,0.2); padding-top:5px;">
-                            📝 "${msgShort}"
+                         <div style="font-size:14px; margin-bottom:5px; color:#fbbf24;">
+                            Se hicieron <b>${clientesProcesados}</b> seguimientos reales.
+                         </div>
+                         <div style="font-size:11.5px; color:#cbd5e1; border-top:1px solid rgba(255,255,255,0.2); padding-top:5px; line-height: 1.4;">
+                            Se omitieron <b>${duplicados}</b> pestañas duplicadas.<br>
+                            <span style="color:#64748b;">(De un total de ${totalPestanas} pestañas detectadas)</span>
                           </div>`, 
                         '#10b981'
                     );
@@ -285,7 +360,7 @@
                         });
                         const toast = document.getElementById('toast-crm-global');
                         if (toast) { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }
-                    }, 3500); 
+                    }, 4500); 
                 }
             } else {
                 if (pending > 0) settlementTimer = 0; 
@@ -298,22 +373,40 @@
     const injectControlPanel = () => {
         if (document.getElementById('wrapper-crm-masivo')) return;
 
-        // 🚛 CAMIÓN DE BASURA (Se ejecuta al abrir el panel)
-        // Elimina llaves huérfanas viejas para que la Mac no se trabe
+        // 🚛 CAMIÓN DE BASURA INTELIGENTE (Solo borra lo viejo, respeta lo que está trabajando ahora)
         try {
+            const ahora = Date.now();
             const keysToDelete = [];
+            
             for (let i = 0; i < localStorage.length; i++) {
                 const key = localStorage.key(i);
-                if (key && (key.startsWith('crm_task_') || key.startsWith('LOCK_') || key.startsWith('CRM_BTN_STATE_'))) {
-                    keysToDelete.push(key);
+                if (!key) continue;
+
+                // 1. Borrar candados (LOCK_) que tengan más de 2 minutos de antigüedad
+                if (key.startsWith('LOCK_')) {
+                    const partes = key.split('_');
+                    const timestamp = parseInt(partes[partes.length - 1]); // Extraemos la hora
+                    if (ahora - timestamp > 120000) { // 120,000ms = 2 minutos
+                        keysToDelete.push(key);
+                    }
+                }
+                
+                // 2. Borrar tareas colgadas (crm_task_) si ya no hay ráfaga activa
+                if (key.startsWith('crm_task_')) {
+                    const statusData = localStorage.getItem('crm_display_status');
+                    if (!statusData) {
+                        keysToDelete.push(key); 
+                    } else {
+                        const parsedStatus = JSON.parse(statusData);
+                        if (ahora - parsedStatus.timestamp > 120000) keysToDelete.push(key);
+                    }
                 }
             }
-            // Borramos de golpe
+            // Borramos la basura real
             keysToDelete.forEach(k => localStorage.removeItem(k));
         } catch (e) {}
 
         const currentInfo = detectCountry();
-        // ... (el resto de tu código de injectControlPanel sigue igual)
         const wrapper = document.createElement('div');
         wrapper.id = 'wrapper-crm-masivo';
         Object.assign(wrapper.style, { position: 'fixed', left: '0', top: '0', zIndex: '2147483647', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', pointerEvents: 'none', fontFamily: "'Segoe UI', sans-serif" });
@@ -361,8 +454,24 @@
             Object.assign(btn.style, { padding: '6px 5px', width: '100%', fontSize: '11px', borderRadius: '6px', cursor: 'pointer', fontWeight: '700', marginBottom: '4px', transition: 'all 0.2s' });
             applyDynamicHover(btn, color);
             
-            btn.onclick = () => {
-                if (!confirm('⚠️ Asegúrate de no repetir los seguimientos. ¿Ejecutar a todas las pestañas?')) return;
+            // 🔥 CIRUGÍA: Mostrar el texto exacto en la alerta antes de confirmar
+            btn.onclick = async () => {
+                // Capturamos lo que el usuario escribió justo antes de hacer clic
+                const msgText = localStorage.getItem('u_s') || 'Sin texto';
+                const msgShort = msgText.length > 100 ? msgText.substring(0, 100) + '...' : msgText;
+
+                const confirmado = await mostrarConfirmacionHTML(
+                    '⚠️ Seguimientos Masivos',
+                    `Acción a ejecutar: <strong style="color: ${color}; font-size: 16px; letter-spacing: 0.5px; text-transform: uppercase;">[ ${text} ]</strong><br><br>
+                    Asegúrate de no repetir los seguimientos.<br>Se enviará el siguiente texto a <strong>todas las pestañas abiertas</strong>:<br><br>
+                    <div style="background: rgba(0,0,0,0.3); padding: 12px 10px; border-radius: 6px; font-style: italic; color: #93c5fd; font-size: 13px; word-break: break-word; border: 1px solid ${color}; text-align: center; box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);">
+                        📝 "${msgShort}"
+                    </div>`,
+                    'Sí, Ejecutar',
+                    color
+                );
+                
+                if (!confirmado) return;
                 
                 // 1. Limpieza inicial para el Monitor
                 Object.keys(localStorage).forEach(k => { if (k.startsWith('crm_task_')) localStorage.removeItem(k); });
@@ -412,8 +521,17 @@
             return btn;
         };
 
-        const btnReset = createSmallBtn('🔓 Reset', '#8b5cf6', () => {
-            if (!confirm('⚠️ Borrar estado para volver a ejecutar. ¿Continuar?')) return; 
+        // 🔥 AJUSTE: Alerta de Reseteo (Morada)
+        const btnReset = createSmallBtn('🔓 Reset', '#8b5cf6', async () => {
+            const confirmado = await mostrarConfirmacionHTML(
+                '🔓 Reiniciar Estado',
+                'Desbloquear botones para seguimientos Nuevos.<br>¿Continuar?',
+                'Sí, Reiniciar',
+                '#8b5cf6' 
+            );
+            
+            if (!confirmado) return; 
+            
             state = { 'yoMismo': false, 'emergencia1': false, 'emergencia2': false };
             saveState(); 
             updateButtonVisuals();
@@ -422,8 +540,16 @@
             renderGlobalToast(); 
         });
 
-        const btnClose = createSmallBtn('❌ Cerrar', '#64748b', () => {
-            if (confirm('¿Cerrar TODAS las pestañas procesadas?')) {
+        // 🔥 AJUSTE: Alerta de Cierre (Roja/Peligro)
+        const btnClose = createSmallBtn('❌ Cerrar', '#64748b', async () => {
+            const confirmado = await mostrarConfirmacionHTML(
+                '❌ Cerrar Pestañas',
+                '¿Estás seguro de querer cerrar <strong>TODAS</strong> las pestañas de clientes?',
+                'Sí, Cerrar todo',
+                '#ef4444' 
+            );
+            
+            if (confirmado) {
                 localStorage.setItem('cerrar_detalles', Date.now().toString());
                 window.close();
             }
