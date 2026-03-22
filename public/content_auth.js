@@ -25,6 +25,7 @@
     // 🌐 EL ENRUTADOR INTELIGENTE V12
     // ==========================================
     const CEREBRO_URL = 'https://script.google.com/macros/s/AKfycbza0-zudKSnFi43LxJAhYoNRbcGfSrrPjzU3iQF0Ah62S9_5-BxUUYVpxpZAXFccC3P-w/exec';
+    const FIREBASE_URL = "https://notificacionsst-14eb3-default-rtdb.firebaseio.com/alerta_activa.json";
     
     // URLs de los Obreros Activos
     const OBRERO_MEXICO_URL = 'https://script.google.com/macros/s/AKfycbza0-zudKSnFi43LxJAhYoNRbcGfSrrPjzU3iQF0Ah62S9_5-BxUUYVpxpZAXFccC3P-w/exec';
@@ -1141,7 +1142,6 @@ function checkRepairButton() {
         if (window.firebaseEscuchando) return; 
         window.firebaseEscuchando = true;
 
-        const FIREBASE_URL = "https://notificacionesss1-default-rtdb.firebaseio.com/alerta_activa.json";
         let source = null; // Lo declaramos aquí para que toda la función lo vea
 
         const procesarAviso = (aviso) => {
@@ -1557,4 +1557,3 @@ function checkRepairButton() {
     }, 2000);
 
 })();
-
