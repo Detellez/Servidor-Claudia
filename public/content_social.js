@@ -451,8 +451,18 @@
         const addBtn = (icon, action, id) => { const btn = document.createElement('button'); btn.className = 'visor-btn'; if(id) btn.id = id; btn.innerHTML = icon; btn.onclick = (e) => { e.stopPropagation(); action(btn); }; toolbar.appendChild(btn); return btn; };
         const setMode = (mode) => {
             vState.mode = mode; document.querySelectorAll('.visor-btn').forEach(b => b.classList.remove('active'));
-            if (mode === 'VIEW') { document.getElementById('btn-view-mode').classList.add('active'); container.style.cursor = 'grab'; document.getElementById('tool-options-panel').classList.remove('visible'); document.getElementById('visor-brush-cursor').style.display = 'none'; } 
-            else { document.getElementById('btn-draw-mode').classList.add('active'); container.style.cursor = 'none'; document.getElementById('tool-options-panel').classList.add('visible'); }
+            if (mode === 'VIEW') { 
+                document.getElementById('btn-view-mode').classList.add('active'); 
+                container.style.cursor = 'grab'; 
+                canvas.style.cursor = 'grab'; 
+                document.getElementById('tool-options-panel').classList.remove('visible'); 
+                document.getElementById('visor-brush-cursor').style.display = 'none'; 
+            } else { 
+                document.getElementById('btn-draw-mode').classList.add('active'); 
+                container.style.cursor = 'default'; // El fondo negro vuelve a ser flecha normal
+                canvas.style.cursor = 'none';       // Solo la imagen esconde el cursor nativo
+                document.getElementById('tool-options-panel').classList.add('visible'); 
+            }
         };
         addBtn('✋', () => setMode('VIEW'), 'btn-view-mode'); addBtn('✏️', () => setMode('DRAW'), 'btn-draw-mode');
         const sep = document.createElement('div'); sep.style.cssText = 'width:1px; height:30px; background:rgba(255,255,255,0.2); margin:0 5px;'; toolbar.appendChild(sep);
