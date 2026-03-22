@@ -95,7 +95,7 @@
         const panel = document.createElement('div');
         panel.id = 'visor-top-status';
         Object.assign(panel.style, {
-            position: 'fixed', zIndex: 10000, bottom: '1px', left: '50%', transform: 'translateX(-50%)',
+            position: 'fixed', zIndex: '2147483639', bottom: '1px', left: '50%', transform: 'translateX(-50%)',
             backgroundColor: 'rgba(255, 255, 255, 0.65)', backdropFilter: 'blur(12px)', webkitBackdropFilter: 'blur(12px)',
             padding: '10px 20px', borderRadius: '12px', boxShadow: '0 8px 32px rgba(0, 0, 0, 0.15)',
             border: '1px solid rgba(255, 255, 255, 0.5)', display: 'none', flexDirection: 'column', gap: '4px',
