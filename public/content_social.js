@@ -140,18 +140,7 @@
     // ========================================================================
     let isGhostModeActive = localStorage.getItem('CRM_GHOST_MODE') === 'true';
 
-    const showGhostToast = (message, type = 'success') => {
-        document.querySelectorAll('.ghost-toast-msg').forEach(e => e.remove());
-        const toast = document.createElement('div');
-        toast.className = `ghost-toast-msg ${type}`;
-        toast.innerHTML = message;
-        document.body.appendChild(toast);
-        requestAnimationFrame(() => toast.classList.add('visible'));
-        setTimeout(() => {
-            toast.classList.remove('visible');
-            setTimeout(() => toast.remove(), 500);
-        }, 3000);
-    };
+    
 
     const removeWatermarks = () => {
         if (!isGhostModeActive) return; 
@@ -195,57 +184,38 @@
     const injectSideButtons = () => {
         const url = window.location.href;
         
-        // --- 1. Botón Ghost Mode (EN TODAS LAS PÁGINAS VÁLIDAS) ---
-        if (isValidPage(url)) {
-            if (!document.getElementById('btn-ghost-mode')) {
-                const btnGhost = document.createElement('button');
-                btnGhost.id = 'btn-ghost-mode';
-                btnGhost.className = 'side-btn-app';
-                btnGhost.innerHTML = '👻'; 
-                btnGhost.title = 'Modo Fantasma (Anti-Marca de Agua)';
-                
-                if (isGhostModeActive) {
-                    btnGhost.classList.add('active');
-                    removeWatermarks();
-                }
-
-                btnGhost.onclick = () => {
-                    isGhostModeActive = !isGhostModeActive;
-                    localStorage.setItem('CRM_GHOST_MODE', isGhostModeActive);
-                    updateGhostButtonVisuals();
-
-                    if (isGhostModeActive) {
-                        removeWatermarks();
-                        showGhostToast('👻 Marca de agua OCULTA', 'success');
-                    } else {
-                        showGhostToast('👁️ Marca de agua VISIBLE', 'warning');
-                    }
-                };
-                document.body.appendChild(btnGhost);
-            }
-        } else {
-            document.getElementById('btn-ghost-mode')?.remove();
-        }
-
-        // --- 2. Botón Cámara (SOLO EN DETAIL) ---
+        // --- 1. Botón Cámara (Mantenemos solo este) ---
         if (url.includes('/detail')) {
             if (!document.getElementById('btn-ver-id-ext')) {
                 const btnCam = document.createElement('button');
                 btnCam.id = 'btn-ver-id-ext';
                 btnCam.className = 'side-btn-app';
-                btnCam.innerHTML = '📷';
+                btnCam.innerHTML = '📷'; 
                 btnCam.title = 'Ver Fotos del Cliente';
                 btnCam.onclick = () => {
                     const imgs = extractImages();
                     if (imgs.length) openImageViewer(imgs);
-                    else alert("⚠️ No se han encontrado imágenes cargadas aún.");
+                    else alert("⚠️ No se han encontrado imágenes.");
                 };
                 document.body.appendChild(btnCam);
             }
         } else {
             document.getElementById('btn-ver-id-ext')?.remove();
         }
+        
+        // El botón Ghost ha sido ELIMINADO de aquí.
     };
+
+    // 🔥 PUENTE PARA EL MENÚ CONTEXTUAL 🔥
+    // Esta función permite que el menú de 'content_auth.js' active el fantasma
+    window.addEventListener('SST_ACTIVATE_GHOST', () => {
+        isGhostModeActive = !isGhostModeActive;
+        localStorage.setItem('CRM_GHOST_MODE', isGhostModeActive);
+        if (isGhostModeActive) {
+            removeWatermarks();
+        }
+        // Nota: Las notificaciones ahora las dispara content_auth.js directamente
+    });
 
     // ========================================================================
     // 6. PANEL SOCIAL (SOLO EN DETAIL)
@@ -512,4 +482,82 @@
         if (isGhostModeActive) removeWatermarks();
     }).observe(document.body, {subtree:true, childList:true});
 
+    // ==============================================================================
+    // 📡 ESCUCHADOR DE ÓRDENES DEL MENÚ OSCURO (Abre la imagen exacta)
+    // ==============================================================================
+    window.addEventListener('SST_OPEN_VIEWER', (e) => {
+        const targetUrl = e.detail?.url;
+        if (!targetUrl) return;
+        
+        const imgs = extractImages();
+        // Buscamos si la imagen clickeada está en la lista del CRM
+        const index = imgs.findIndex(img => img.src === targetUrl);
+        
+        if (index !== -1) {
+            // Si la encuentra, la saca de donde esté y la pone en el lugar #1 (índice 0)
+            const clickedImg = imgs.splice(index, 1)[0];
+            imgs.unshift(clickedImg);
+        } else {
+            // Si por alguna razón es una foto suelta, la inyecta como la primera
+            imgs.unshift({ type: "Seleccionada", src: targetUrl });
+        }
+        
+        // Abre el visor, que automáticamente carga la imagen #1
+        openImageViewer(imgs);
+    });
+
 })();
+// ==============================================================================
+// 📡 ESCUCHADOR DE COMANDOS DEL MENÚ CONTEXTUAL (content_auth.js)
+// ==============================================================================
+window.addEventListener('storage', (e) => {
+    // Si la clave es nuestro comando y tiene datos nuevos
+    if (e.key === 'SST_TRIGGER_VISOR_COMMAND' && e.newValue) {
+        try {
+            const commandData = JSON.parse(e.newValue);
+            const targetImageUrl = commandData.url;
+            console.log("SST SOCIAL: Recibida orden de visor para:", targetImageUrl);
+
+            //
+            // (Asumimos que content_social ya inyectó el modal y las variables globales)
+            const modalVisor = document.getElementById('modal_visor_cedulas');
+            const imgVisor = document.getElementById('img_visor_grande');
+            
+            if (!modalVisor || !imgVisor || typeof arrayImagesVisor === 'undefined') {
+                console.error("SST SOCIAL: El Visor no está inicializado en esta pestaña.");
+                return;
+            }
+
+            //
+            let indexToOpen = arrayImagesVisor.indexOf(targetImageUrl);
+
+            if (indexToOpen !== -1) {
+                //
+                console.log("SST SOCIAL: Imagen encontrada en el array. Abriendo índice:", indexToOpen);
+                
+                // Actualizamos variables globales del visor (definidas en content_social)
+                currentVisorIndex = indexToOpen; 
+                imgVisor.src = targetImageUrl;
+                modalVisor.style.display = 'flex'; // Mostramos modal
+                
+                // (Opcional) Guardar caché para que persista al cerrar
+                localStorage.setItem('CACHED_VISOR_INDEX', indexToOpen);
+            } else {
+                //
+                console.log("SST SOCIAL: Imagen nueva. Inyectando en Visor temporalmente.");
+                arrayImagesVisor.unshift(targetImageUrl); // Añadir al inicio
+                currentVisorIndex = 0; 
+                imgVisor.src = targetImageUrl;
+                modalVisor.style.display = 'flex';
+                // (Opcional) Re-cachear array
+                localStorage.setItem('CACHED_VISOR_IMAGES', JSON.stringify(arrayImagesVisor));
+            }
+
+        } catch (err) {
+            console.error("SST SOCIAL: Error al procesar comando de visor:", err);
+        } finally {
+            //
+            localStorage.removeItem('SST_TRIGGER_VISOR_COMMAND');
+        }
+    }
+});
