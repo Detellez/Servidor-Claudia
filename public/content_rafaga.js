@@ -67,14 +67,6 @@
             input:checked + .slider-mora { background-color: #ef4444; box-shadow: 0 0 8px #ef4444; }
             input:checked + .slider-mora:before { transform: translateX(16px); }
             .label-mora { font-size: 11px; font-weight: 800; cursor: pointer; user-select: none; transition: 0.3s; letter-spacing: 0.5px; }
-
-            /* 🔥 MODAL PRE-FILTRO MANAGER 🔥 */
-            .pf-seccion { margin-bottom: 12px; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 6px; }
-            .pf-titulo { font-size: 12px; color: #93c5fd; font-weight: bold; margin-bottom: 8px; text-transform: uppercase; }
-            .pf-grid { display: flex; flex-wrap: wrap; gap: 6px; }
-
-            .btn-isrepay { background: rgba(57, 255, 20, 0.05); color: #34d399; border: 1px solid #34d399; border-radius: 4px; padding: 4px 16px; font-size: 13px; font-weight: bold; cursor: pointer; outline: none; transition: 0.3s; opacity: 0.5; }
-            .btn-isrepay.active { opacity: 1; color: #39ff14; border-color: #39ff14; background: rgba(57, 255, 20, 0.15); box-shadow: 0 0 10px rgba(57, 255, 20, 0.6); text-shadow: 0 0 5px rgba(57, 255, 20, 0.8); }
             
             /* 🔥 NUEVOS ESTILOS PARA EDICIÓN DE CORREOS 🔥 */
             .correo-celda { cursor: pointer; padding: 3px 6px; border-radius: 4px; transition: 0.2s; display: inline-block; min-width: 60px; font-weight: bold; }
@@ -228,192 +220,6 @@
         });
     };
 
-    // ==========================================
-    // 🛠️ MODAL PRE-FILTRO MANAGER (DINÁMICO Y REACTIVO)
-    // ==========================================
-    const mostrarModalPreFiltro = (registrosBrutos) => {
-        return new Promise((resolve) => {
-            const overlay = document.createElement('div');
-            Object.assign(overlay.style, {
-                position: 'fixed', top: '0', left: '0', width: '100vw', height: '100vh', 
-                backgroundColor: 'rgba(0,0,0,0.85)', zIndex: '2147483647', 
-                display: 'flex', justifyContent: 'center', alignItems: 'center', backdropFilter: 'blur(4px)'
-            });
-
-            const modal = document.createElement('div');
-            Object.assign(modal.style, {
-                background: '#0f172a', padding: '20px', borderRadius: '12px', border: '1px solid #3b82f6', 
-                width: '650px', maxWidth: '95%', color: 'white', maxHeight: '85vh', display: 'flex', 
-                flexDirection: 'column', boxShadow: '0 20px 50px rgba(0,0,0,0.8)', fontFamily: 'system-ui, sans-serif'
-            });
-
-            blindarElemento(overlay);
-
-            let selEtapas = [];
-            let selCuentas = [];
-            let selFechas = [];
-            let selMoras = [];
-            let isRepayActive = false;
-
-            let unicosMap = new Map();
-            const isVariousPlan = window.location.href.includes('variousplan.com');
-            
-            // DESCARTANDO DUPLICADOS EN LA ENTRADA
-            registrosBrutos.forEach(c => {
-                let idPlanBruto = isVariousPlan ? (c.borrowId || c.orderId || "") : (c.repayId || c.orderId || "");
-                const idPlanStr = String(idPlanBruto);
-                const idPlan = isVariousPlan ? idPlanStr : (idPlanStr.includes('p') ? idPlanStr : 'p' + idPlanStr);
-                if (idPlan && !unicosMap.has(idPlan)) unicosMap.set(idPlan, c);
-            });
-            const registrosUnicos = Array.from(unicosMap.values());
-
-            const renderUI = () => {
-                // 🔥 CASCADA ADN: Filtrando opciones disponibles basándonos en registros purificados
-                let baseParaCuentas = registrosUnicos;
-                if (selEtapas.length > 0) {
-                    baseParaCuentas = registrosUnicos.filter(r => selEtapas.includes(r.stageName || 'SIN ETAPA'));
-                }
-
-                let baseParaElResto = baseParaCuentas;
-                if (selCuentas.length > 0) {
-                    baseParaElResto = baseParaCuentas.filter(r => selCuentas.includes(r.urgeUserName || 'SIN ASIGNAR'));
-                }
-
-                const etapasAll = [...new Set(registrosUnicos.map(r => r.stageName || 'SIN ETAPA'))].sort();
-                const cuentasDisp = [...new Set(baseParaCuentas.map(r => r.urgeUserName || 'SIN ASIGNAR'))].sort();
-                const morasDisp = [...new Set(baseParaElResto.map(r => String(r.overdueDay || '0')))].sort((a,b)=>parseInt(a)-parseInt(b));
-                const fechasTodas = [...new Set(baseParaElResto.map(r => r.openTime ? String(r.openTime).split(' ')[0] : 'SIN FECHA'))];
-                const fechasDisp = fechasTodas.sort().reverse().slice(0, 5);
-
-                selCuentas = selCuentas.filter(c => cuentasDisp.includes(c));
-                selFechas = selFechas.filter(f => fechasDisp.includes(f));
-                selMoras = selMoras.filter(m => morasDisp.includes(m));
-
-                let countMatched = registrosUnicos.filter(c => {
-                    const rEtapa = c.stageName || 'SIN ETAPA';
-                    const rCuenta = c.urgeUserName || 'SIN ASIGNAR';
-                    const rMora = String(c.overdueDay || '0').trim();
-                    const rFecha = c.openTime ? String(c.openTime).split(' ')[0] : 'SIN FECHA';
-                    const rRepay = String(c.isRepay).toLowerCase() === 'true';
-
-                    // 1. Etapa (ADN Estricto / AND)
-                    if (selEtapas.length > 0 && !selEtapas.includes(rEtapa)) return false;
-
-                    // 2. Cuenta (ADN Estricto / AND)
-                    if (selCuentas.length > 0 && !selCuentas.includes(rCuenta)) return false;
-
-                    const tieneFechas = selFechas.length > 0;
-                    const tieneMoras = selMoras.length > 0;
-                    const tieneRepay = isRepayActive;
-
-                    // Si no tocaste los filtros sumatorios, pasan todos los que sobrevivieron a Etapa+Cuenta
-                    if (!tieneFechas && !tieneMoras && !tieneRepay) return true;
-
-                    const coincideFecha = tieneFechas && selFechas.includes(rFecha);
-                    const coincideMora = tieneMoras && selMoras.includes(rMora);
-                    const coincideRepay = tieneRepay && rRepay;
-
-                    // 3. Sumatorio de atributos (OR)
-                    return coincideFecha || coincideMora || coincideRepay; 
-                }).length;
-
-                modal.innerHTML = `
-                    <div style="border-bottom: 1px solid #334155; padding-bottom: 10px; margin-bottom: 15px;">
-                        <h2 style="margin: 0; color: #60a5fa; font-size: 18px;">⚙️ Filtro Manager de Entrada</h2>
-                        <p style="margin: 5px 0 0 0; font-size: 13px; color: #94a3b8;">
-                            Total de clientes únicos en servidor: ${registrosUnicos.length} <br>
-                            <span style="color:#34d399; font-size: 15px; font-weight: bold;">📊 Preseleccionados ahora: ${countMatched} clientes</span>
-                        </p>
-                    </div>
-                    
-                    <div style="overflow-y: auto; flex-grow: 1; padding-right: 5px;" id="pf-scroll-area">
-                        <div class="pf-seccion">
-                            <div class="pf-titulo">📌 1. Etapas (Filtro Base)</div>
-                            <div class="pf-grid">
-                                ${etapasAll.map(e => `<button type="button" class="btn-rafaga-toggle ${selEtapas.includes(e) ? 'active' : ''}" data-type="etapa" data-val="${e}">${e}</button>`).join('')}
-                            </div>
-                        </div>
-                        
-                        <div class="pf-seccion">
-                            <div class="pf-titulo">👤 2. Cuentas / Agentes (Depende de Etapa)</div>
-                            <div class="pf-grid">
-                                ${cuentasDisp.map(c => `<button type="button" class="btn-rafaga-toggle ${selCuentas.includes(c) ? 'active' : ''}" data-type="cuenta" data-val="${c}">${c}</button>`).join('')}
-                            </div>
-                        </div>
-
-                        <div class="pf-seccion">
-                            <div class="pf-titulo">📆 3. Fechas de Conexión (Sumatorio)</div>
-                            <div class="pf-grid">
-                                ${fechasDisp.map(f => `<button type="button" class="btn-rafaga-toggle ${selFechas.includes(f) ? 'active' : ''}" data-type="fecha" data-val="${f}">${f}</button>`).join('')}
-                            </div>
-                        </div>
-
-                        <div class="pf-seccion">
-                            <div class="pf-titulo">⚠️ 4. Días de Mora (Sumatorio)</div>
-                            <div class="pf-grid">
-                                ${morasDisp.map(m => `<button type="button" class="btn-rafaga-toggle ${selMoras.includes(m) ? 'active' : ''}" data-type="mora" data-val="${m}">Día ${m}</button>`).join('')}
-                            </div>
-                        </div>
-
-                        <div class="pf-seccion" style="display:flex; align-items:center; gap: 15px;">
-                            <div class="pf-titulo" style="margin-bottom:0;">💰 5. Sumar Clientes Aprobados:</div>
-                            <button type="button" id="pf-btn-isrepay" class="btn-isrepay ${isRepayActive ? 'active' : ''}">Clientes Si</button>
-                        </div>
-                    </div>
-
-                    <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; border-top: 1px solid #334155; padding-top: 15px;">
-                        <button type="button" id="pf-btn-cancelar" style="background: transparent; border: 1px solid #ef4444; color: #f87171; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s;">Cancelar</button>
-                        <button type="button" id="pf-btn-procesar" style="background: #3b82f6; border: none; color: white; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; box-shadow: 0 0 10px rgba(59, 130, 246, 0.5); transition: 0.2s;">🚀 Extraer ${countMatched} clientes</button>
-                    </div>
-                `;
-
-                modal.querySelectorAll('.btn-rafaga-toggle').forEach(btn => {
-                    btn.onclick = () => {
-                        const type = btn.getAttribute('data-type');
-                        const val = btn.getAttribute('data-val');
-                        let targetArr;
-                        
-                        if (type === 'etapa') targetArr = selEtapas;
-                        if (type === 'cuenta') targetArr = selCuentas;
-                        if (type === 'fecha') targetArr = selFechas;
-                        if (type === 'mora') targetArr = selMoras;
-
-                        if (targetArr.includes(val)) {
-                            targetArr.splice(targetArr.indexOf(val), 1); 
-                        } else {
-                            targetArr.push(val); 
-                        }
-                        renderUI(); 
-                    };
-                });
-
-                modal.querySelector('#pf-btn-isrepay').onclick = () => {
-                    isRepayActive = !isRepayActive;
-                    renderUI();
-                };
-
-                modal.querySelector('#pf-btn-cancelar').onclick = () => {
-                    overlay.remove();
-                    resolve(null);
-                };
-
-                modal.querySelector('#pf-btn-procesar').onclick = () => {
-                    overlay.remove();
-                    resolve({
-                        etapas: selEtapas,
-                        cuentas: selCuentas,
-                        moras: selMoras,
-                        fechas: selFechas,
-                        soloIsRepay: isRepayActive
-                    });
-                };
-            };
-
-            renderUI();
-            overlay.appendChild(modal);
-            document.body.appendChild(overlay);
-        });
-    };
 
     // ==========================================
     // 🚀 MOTOR DE EXTRACCIÓN MASIVA VÍA API 
@@ -430,13 +236,12 @@
     };
 
     const restaurarBotones = () => {
-        const btnManager = document.getElementById('btn-modo-manager');
         const btnExtraer = document.getElementById('btn-extraer-todo');
-        if (btnManager) { btnManager.innerText = '⚡Modo Manager⚡'; btnManager.disabled = false; }
         if (btnExtraer) { btnExtraer.innerText = '⚡Extraer Todo⚡'; btnExtraer.disabled = false; }
     };
 
-    async function iniciarExtraccionAPI(esModoManager = true) {
+    // 🔥 API AGENTE UNICO: SIN MODAL MANAGER 🔥
+    async function iniciarExtraccionAPI() {
         if (window.location.href.includes('/login')) {
             return mostrarAviso('Inicia sesión en el CRM primero.', '#ef4444', 'error');
         }
@@ -444,22 +249,26 @@
         const inputToken = document.getElementById('input-token-api');
         if (!inputToken) return;
 
+        // 🔥 AUTO-REFRESH DEL TOKEN DESDE LAS COOKIES 🔥
+        const tokenFresco = obtenerTokenAutomatico();
+        if (tokenFresco) {
+            inputToken.value = tokenFresco; // Actualiza el cuadro de texto silenciosamente
+        }
+
         const tokenRaw = inputToken.value.trim();
-        if (!tokenRaw) return mostrarAviso('⚠️ Por favor, pega el Token primero', '#fbbf24', 'warning');
+        if (!tokenRaw) return mostrarAviso('⚠️ No se encontró Token. Recarga la página o inicia sesión.', '#fbbf24', 'warning');
         
-        const token = decodeURIComponent(tokenRaw);
+        // Declarado con 'let' para que se pueda auto-actualizar si expira en medio proceso
+        let token = decodeURIComponent(tokenRaw);
         const baseUrl = window.location.origin; 
         const countryInfo = getCountryInfo(); 
         const isVariousPlan = baseUrl.includes('variousplan.com');
         
-        const btnManager = document.getElementById('btn-modo-manager');
         const btnExtraer = document.getElementById('btn-extraer-todo');
 
-        if (btnManager) btnManager.disabled = true;
         if (btnExtraer) btnExtraer.disabled = true;
 
-        const btnActivo = esModoManager ? btnManager : btnExtraer;
-        if (btnActivo) btnActivo.innerText = '⏳ Analizando Base...';
+        if (btnExtraer) btnExtraer.innerText = '⏳ Analizando Base...';
 
         const pageSize = 5000;
         const maxPagesPerRun = 20;
@@ -487,7 +296,19 @@
                         
                         const jsonList = await respList.json();
                         
-                        if (jsonList.code === 401 || jsonList.code === 403) throw new Error("TokenExpirado");
+                        // 🔥 RECUPERACIÓN EN VUELO SI EL TOKEN EXPIRA EN MEDIO PROCESO 🔥
+                        if (jsonList.code === 401 || jsonList.code === 403) {
+                            const nuevoTokenRaw = obtenerTokenAutomatico();
+                            if (nuevoTokenRaw && decodeURIComponent(nuevoTokenRaw) !== token) {
+                                token = decodeURIComponent(nuevoTokenRaw); // Lo actualizamos internamente
+                                inputToken.value = nuevoTokenRaw; // Actualizamos el panel visual
+                                mostrarAviso('🔄 Token expiró. Renovando automáticamente...', '#8b5cf6', 'info');
+                                continue; // Reintenta esta misma página sin abortar la descarga
+                            } else {
+                                throw new Error("TokenExpirado");
+                            }
+                        }
+                        
                         if (jsonList.code !== 200 && jsonList.code !== 20000 && jsonList.code !== 0) break;
 
                         const registros = jsonList?.data?.records || jsonList?.records || [];
@@ -512,7 +333,7 @@
                 return;
             }
 
-            // DESCARTANDO DUPLICADOS DE LA EXTRACCIÓN GLOBAL
+            // DESCARTANDO DUPLICADOS EN LA BASE CRUDA
             let unicosMap = new Map();
             todosLosRegistrosBrutos.forEach(c => {
                 let idPlanBruto = isVariousPlan ? (c.borrowId || c.orderId || "") : (c.repayId || c.orderId || "");
@@ -520,57 +341,16 @@
                 const idPlan = isVariousPlan ? idPlanStr : (idPlanStr.includes('p') ? idPlanStr : 'p' + idPlanStr);
                 if (idPlan && !unicosMap.has(idPlan)) unicosMap.set(idPlan, c);
             });
-            const registrosUnicos = Array.from(unicosMap.values());
+            let registrosAProcesar = Array.from(unicosMap.values());
             
-            let registrosAProcesar = [];
-
-            if (esModoManager) {
-                const filtrosElegidos = await mostrarModalPreFiltro(todosLosRegistrosBrutos);
-                if (!filtrosElegidos) {
-                    mostrarAviso('Extracción cancelada', '#fbbf24', 'warning');
-                    restaurarBotones();
-                    return;
-                }
-
-                registrosAProcesar = registrosUnicos.filter(c => {
-                    const rEtapa = c.stageName || 'SIN ETAPA';
-                    const rCuenta = c.urgeUserName || 'SIN ASIGNAR';
-                    const rMora = String(c.overdueDay || '0').trim();
-                    const rFecha = c.openTime ? String(c.openTime).split(' ')[0] : 'SIN FECHA';
-                    const rRepay = String(c.isRepay).toLowerCase() === 'true';
-
-                    // 1. Etapa (AND)
-                    if (filtrosElegidos.etapas.length > 0 && !filtrosElegidos.etapas.includes(rEtapa)) return false; 
-
-                    // 2. Cuenta (AND)
-                    if (filtrosElegidos.cuentas.length > 0 && !filtrosElegidos.cuentas.includes(rCuenta)) return false;
-
-                    const tieneFechas = filtrosElegidos.fechas.length > 0;
-                    const tieneMoras = filtrosElegidos.moras.length > 0;
-                    const tieneRepay = filtrosElegidos.soloIsRepay;
-
-                    // Si solo elegiste Etapa/Cuenta, pasan todos los de ese universo
-                    if (!tieneFechas && !tieneMoras && !tieneRepay) return true; 
-
-                    const coincideFecha = tieneFechas && filtrosElegidos.fechas.includes(rFecha);
-                    const coincideMora = tieneMoras && filtrosElegidos.moras.includes(rMora);
-                    const coincideRepay = tieneRepay && rRepay;
-
-                    // 3. Sumatorio (OR)
-                    return coincideFecha || coincideMora || coincideRepay; 
-                });
-            } else {
-                registrosAProcesar = registrosUnicos;
-            }
-
             if(registrosAProcesar.length === 0) {
-                mostrarAviso('Ningún cliente coincide', '#fbbf24', 'warning');
+                mostrarAviso('Ningún cliente válido encontrado', '#fbbf24', 'warning');
                 restaurarBotones();
                 return;
             }
 
             // 🔥 INICIA EXTRACCIÓN TURBO (CHUNKS) 🔥
-            if (btnActivo) btnActivo.innerText = `⏳ Procesando 0 / ${registrosAProcesar.length}...`;
+            if (btnExtraer) btnExtraer.innerText = `⏳ Procesando 0 / ${registrosAProcesar.length}...`;
             let procesadosExitosos = 0;
             const maxDetailCallsPerRun = 6000; 
             let detailCalls = 0;
@@ -649,12 +429,11 @@
                 todosLosNuevosDatos.push(...resultadosDelPaquete);
                 
                 procesadosExitosos += resultadosDelPaquete.length;
-                if (btnActivo) btnActivo.innerText = `⏳ Procesando ${procesadosExitosos} / ${registrosAProcesar.length}...`;
+                if (btnExtraer) btnExtraer.innerText = `⏳ Procesando ${procesadosExitosos} / ${registrosAProcesar.length}...`;
 
                 await new Promise(r => setTimeout(r, 200)); 
             }
 
-            // 🔥 GUARDADO MASIVO Y REPORTE VISUAL 🔥
             const reporte = guardarMultiplesEnLote(todosLosNuevosDatos);
             
             if (reporte.agregados > 0 && reporte.actualizados > 0) {
@@ -678,15 +457,6 @@
     // ==========================================
     // 📊 BASE DE DATOS Y FILTROS MÚLTIPLES
     // ==========================================
-    const guardarEnLote = (datos) => {
-        let lote = JSON.parse(localStorage.getItem('LOTE_RAFAGA') || '[]');
-        const indexExistente = lote.findIndex(cliente => cliente.idPlan === datos.idPlan);
-        if (indexExistente === -1) lote.push(datos); else lote[indexExistente] = datos;
-        localStorage.setItem('LOTE_RAFAGA', JSON.stringify(lote)); 
-        actualizarPanelFiltroPlus(); 
-        actualizarTablaLotes();
-    };
-
     const guardarMultiplesEnLote = (arrayNuevosDatos) => {
         let lote = JSON.parse(localStorage.getItem('LOTE_RAFAGA') || '[]');
         
@@ -867,6 +637,9 @@
             const tokenDetectado = obtenerTokenAutomatico() || "";
             let clicsTitulo = 0;
 
+            const isMacUI = navigator.userAgent.toUpperCase().indexOf('MAC OS') >= 0 || (navigator.userAgentData && navigator.userAgentData.platform === 'macOS');
+            const atajoTexto = isMacUI ? '⌘+Shift+Z' : 'Ctrl+Shift+Z';
+
             header.innerHTML = `
                 <div style="display:flex; align-items:center; gap:15px; padding-right: 30px; width: 100%;">
                     <span id="titulo-panel" style="cursor:pointer; white-space:nowrap; user-select:none;">📋 Base de datos</span>
@@ -875,7 +648,7 @@
                                style="width: 100%; background: #1e293b; color: #34d399; border: 1px solid #334155; border-radius: 4px; padding: 4px 8px; font-size: 10px; outline: none; font-family: monospace; cursor: default; user-select: none;">
                         <div id="escudo-token" style="position:absolute; top:0; left:0; width:100%; height:100%; z-index:10; cursor:default;"></div>
                     </div>
-                    <span style="font-size:11px; font-weight:normal; color:#94a3b8; background:#0f172a; padding:2px 6px; border-radius:4px; user-select:none;">Ctrl+Shift+Z</span>
+                    <span style="font-size:11px; font-weight:normal; color:#94a3b8; background:#0f172a; padding:2px 6px; border-radius:4px; user-select:none;">${atajoTexto}</span>
                 </div>
                 <button type="button" id="btn-cerrar-panel" style="background:none; border:none; color:#f87171; cursor:pointer; font-size:18px; line-height:1;">✖</button>
             `;
@@ -949,7 +722,6 @@
                 display: 'flex', gap: '15px', alignItems: 'center', flexWrap: 'wrap', position: 'relative' 
             });
 
-            // 🔥 CIRUGÍA: ORDEN DEL FILTRO AVANZADO MOVIDO AQUÍ 🔥
             toolbar.innerHTML = `
                 <button type="button" id="btn-mas-filtro" style="background: #8b5cf6; color: white; border: 1px solid #7c3aed; border-radius: 4px; padding: 6px 12px; font-size: 13px; font-weight: bold; cursor: pointer; outline: none; box-shadow: 0 0 10px rgba(139, 92, 246, 0.5); transition: 0.3s;">
                     ✨ + Filtros Avanzados
@@ -1071,7 +843,7 @@
                     let x = e.clientX + 15;
                     let y = e.clientY + 15;
                     
-                    // Evitar que se salga de la pantalla
+                    // Evitar que se salga de la pantalla (Derecha / Abajo)
                     if (x + 320 > window.innerWidth) x = e.clientX - 335;
                     if (y + 350 > window.innerHeight) y = e.clientY - tooltip.offsetHeight - 15;
 
@@ -1083,7 +855,7 @@
             tableContainer.addEventListener('mouseout', (e) => {
                 if (e.target.classList.contains('rafaga-hover-img') || e.target.classList.contains('rafaga-hover-text')) {
                     tooltip.style.display = 'none';
-                    tooltip.innerHTML = ''; 
+                    tooltip.innerHTML = ''; // Limpiar RAM visual
                 }
             });
 
@@ -1093,12 +865,12 @@
                 backgroundColor: 'rgba(30, 41, 59, 0.8)', borderRadius: '0 0 12px 12px', flexWrap: 'wrap', gap: '10px'
             });
             
+            // 🔥 REMOVIDO EL BOTÓN DE MODO MANAGER 🔥
             footer.innerHTML = `
                 <div style="display:flex; align-items:center; gap:8px;">
                     <button type="button" id="btn-limpiar-lote" class="btn-rafaga btn-red" title="Limpiar Base">🗑️</button>
                     <button type="button" id="btn-descargar-contactos" class="btn-rafaga btn-orange" title="Descargar CSV">👥</button>
                     
-                    <button type="button" id="btn-modo-manager" class="btn-rafaga btn-yellow">⚡Modo Manager⚡</button>
                     <button type="button" id="btn-extraer-todo" class="btn-rafaga btn-green">⚡Extraer Todo⚡</button>
                 </div>
                 <div style="display:flex; gap:10px;">
@@ -1161,23 +933,6 @@
                     actualizarTablaLotes();
                 }
             };
-
-            const btnModoManager = document.getElementById('btn-modo-manager');
-            if (btnModoManager) {
-                btnModoManager.onclick = async (e) => { 
-                    e.preventDefault(); 
-                    e.stopPropagation(); 
-                    const confirmado = await mostrarConfirmacionHTML(
-                        '⚠️ ADVERTENCIA DE SISTEMA',
-                        '¿Estás seguro que estás en una <strong style="color:#eab308;">Cuenta Manager</strong>?',
-                        'Sí, Continuar',
-                        '#eab308' 
-                    );
-                    if(confirmado) {
-                        iniciarExtraccionAPI(true); 
-                    }
-                };
-            }
             
             const btnExtraerTodo = document.getElementById('btn-extraer-todo');
             if (btnExtraerTodo) {
@@ -1186,12 +941,12 @@
                     e.stopPropagation(); 
                     const confirmado = await mostrarConfirmacionHTML(
                         '⚠️ ADVERTENCIA DE SISTEMA',
-                        '¿Estás seguro que estás en una <strong style="color:#34d399;">cuenta única</strong> administrada por agente?',
+                        '¿Estás seguro que estás en una <strong style="color:#34d399;">cuenta</strong> administrada por agente?',
                         'Sí, Continuar',
                         '#34d399' 
                     );
                     if(confirmado) {
-                        iniciarExtraccionAPI(false); 
+                        iniciarExtraccionAPI(); 
                     }
                 };
             }
@@ -1237,8 +992,10 @@
                         dataFila.push(c.diasMora || '0', c.cargoMora || '0', c.montoPago || '0');
                     }
                     if (isEtcActive) {
+                        // Transformamos DNI y SELF en etiquetas <img> si existen
                         let imgDni = c.dniUrl ? `<img src="${c.dniUrl}" style="max-width:200px;border:1px solid #ccc;" />` : '';
                         let imgSelf = c.selfUrl ? `<img src="${c.selfUrl}" style="max-width:200px;border:1px solid #ccc;" />` : '';
+                        
                         dataFila.push(c.linkDescarga || '', imgDni, imgSelf);
                     }
                     dataFila.push(c.fechaConexion || ''); 
@@ -1467,7 +1224,7 @@
     }; 
 
     window.addEventListener('keydown', (e) => {
-        const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+        const isMac = navigator.userAgent.toUpperCase().indexOf('MAC OS') >= 0 || (navigator.userAgentData && navigator.userAgentData.platform === 'macOS');
         const modifierKey = isMac ? e.metaKey : e.ctrlKey;
         if (modifierKey && e.shiftKey && e.code === 'KeyZ') {
             e.preventDefault();
@@ -1512,7 +1269,8 @@
     let lastUrl = location.href;
 
     (async () => {
-        if (localStorage.getItem('PANEL_RAFAGA_VISIBLE') === null) localStorage.setItem('PANEL_RAFAGA_VISIBLE', 'true');
+        // 🔥 MODIFICADO: Ahora el panel inicia OCULTO ('false') por defecto la primera vez
+        if (localStorage.getItem('PANEL_RAFAGA_VISIBLE') === null) localStorage.setItem('PANEL_RAFAGA_VISIBLE', 'false');
         if (localStorage.getItem('RAFAGA_MODO_ETC') === null) localStorage.setItem('RAFAGA_MODO_ETC', 'true');
         
         let estadoInicialMora = 'false'; 
