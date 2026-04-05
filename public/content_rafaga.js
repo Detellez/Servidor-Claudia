@@ -444,10 +444,17 @@
         const inputToken = document.getElementById('input-token-api');
         if (!inputToken) return;
 
+        // 🔥 AUTO-REFRESH DEL TOKEN DESDE LAS COOKIES (NUEVO) 🔥
+        const tokenFresco = obtenerTokenAutomatico();
+        if (tokenFresco) {
+            inputToken.value = tokenFresco; 
+        }
+
         const tokenRaw = inputToken.value.trim();
         if (!tokenRaw) return mostrarAviso('⚠️ Por favor, pega el Token primero', '#fbbf24', 'warning');
         
-        const token = decodeURIComponent(tokenRaw);
+        // 🔥 CAMBIO CLAVE: Usamos 'let' para permitir su auto-actualización (NUEVO) 🔥
+        let token = decodeURIComponent(tokenRaw);
         const baseUrl = window.location.origin; 
         const countryInfo = getCountryInfo(); 
         const isVariousPlan = baseUrl.includes('variousplan.com');
@@ -487,7 +494,19 @@
                         
                         const jsonList = await respList.json();
                         
-                        if (jsonList.code === 401 || jsonList.code === 403) throw new Error("TokenExpirado");
+                        // 🔥 RECUPERACIÓN EN VUELO SI EL TOKEN EXPIRA EN MEDIO PROCESO (NUEVO) 🔥
+                        if (jsonList.code === 401 || jsonList.code === 403) {
+                            const nuevoTokenRaw = obtenerTokenAutomatico();
+                            if (nuevoTokenRaw && decodeURIComponent(nuevoTokenRaw) !== token) {
+                                token = decodeURIComponent(nuevoTokenRaw); // Lo actualizamos internamente
+                                inputToken.value = nuevoTokenRaw; // Actualizamos el panel visual
+                                mostrarAviso('🔄 Token expiró. Renovando automáticamente...', '#8b5cf6', 'info');
+                                continue; // Reintenta esta misma página sin abortar la descarga
+                            } else {
+                                throw new Error("TokenExpirado");
+                            }
+                        }
+
                         if (jsonList.code !== 200 && jsonList.code !== 20000 && jsonList.code !== 0) break;
 
                         const registros = jsonList?.data?.records || jsonList?.records || [];
